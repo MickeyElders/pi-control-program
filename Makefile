@@ -13,7 +13,7 @@ PIN_FACTORY ?= lgpio
 
 SERVICE_USER ?= $(USER)
 RELAY_GPIO ?=
-RELAY_PINS ?= $(if $(strip $(RELAY_GPIO)),$(RELAY_GPIO),27,22,23,24)
+RELAY_PINS ?= $(if $(strip $(RELAY_GPIO)),$(RELAY_GPIO),27,22,23,10)
 RELAY_ACTIVE_LOW ?= 1
 
 .PHONY: help deps venv install-service install reinstall uninstall start stop restart status logs
@@ -26,7 +26,7 @@ help:
 	@echo "make start|stop|restart|status|logs"
 	@echo ""
 	@echo "Overrides:"
-	@echo "  WORKDIR=/path/to/repo SERVICE_USER=pi RELAY_PINS=27,22,23,24 RELAY_ACTIVE_LOW=1 PIN_FACTORY=lgpio PORT=8000"
+	@echo "  WORKDIR=/path/to/repo SERVICE_USER=pi RELAY_PINS=27,22,23,10 RELAY_ACTIVE_LOW=1 PIN_FACTORY=lgpio PORT=8000"
 
 deps:
 	@command -v apt-get >/dev/null 2>&1 || { \

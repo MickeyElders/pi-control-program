@@ -34,7 +34,7 @@ except ImportError:
             return None
 
 
-DEFAULT_PINS = "27,22,23,24"
+DEFAULT_PINS = "27,22,23,10"
 ACTIVE_LOW = os.getenv("RELAY_ACTIVE_LOW", "1").lower() in {"1", "true", "yes", "on"}
 
 

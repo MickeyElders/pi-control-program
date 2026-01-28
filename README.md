@@ -9,7 +9,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 # Configure if needed
-export RELAY_PINS=27,22,23,24
+export RELAY_PINS=27,22,23,10
 export RELAY_ACTIVE_LOW=1
 
 uvicorn app:app --host 0.0.0.0 --port 8000
@@ -18,7 +18,7 @@ uvicorn app:app --host 0.0.0.0 --port 8000
 Open `http://<raspberrypi-ip>:8000`.
 
 ## Config
-- `RELAY_PINS` (default `27,22,23,24`): comma-separated BCM pins.
+- `RELAY_PINS` (default `27,22,23,10`): comma-separated BCM pins.
 - `RELAY_GPIO`: optional single BCM pin (used only when `RELAY_PINS` is not set).
 - `RELAY_ACTIVE_LOW` (default `1`): set to `1` for low-level trigger, `0` for high-level trigger.
 - `GPIOZERO_PIN_FACTORY` (default `lgpio`): GPIO backend (`lgpio` or `rpi`).
@@ -26,7 +26,7 @@ Open `http://<raspberrypi-ip>:8000`.
 ## Systemd + Make automation
 Install and start the service (will check and install system deps):
 ```bash
-make install SERVICE_USER=pi WORKDIR=/home/pi/pi-control-program RELAY_PINS=27,22,23,24 RELAY_ACTIVE_LOW=1 PIN_FACTORY=lgpio
+make install SERVICE_USER=pi WORKDIR=/home/pi/pi-control-program RELAY_PINS=27,22,23,10 RELAY_ACTIVE_LOW=1 PIN_FACTORY=lgpio
 ```
 
 Reinstall / uninstall:
