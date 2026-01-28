@@ -3,32 +3,58 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Pump Control</title>
+    <title>Water Pump Control</title>
     <link rel="stylesheet" href="/static/style.css" />
   </head>
   <body>
     <main class="stage">
-      <section class="card" aria-live="polite">
-        <header class="header">
+      <section class="panel" aria-live="polite">
+        <header class="panel-header">
           <div>
-            <p class="eyebrow">Relay</p>
-            <h1>Water Pump</h1>
+            <p class="eyebrow">Relay Deck</p>
+            <h1>Water Pump Control</h1>
           </div>
-          <div class="status" id="status-wrap">
-            <span id="status-dot" class="dot"></span>
-            <span id="status-text">Checking...</span>
+          <div class="meta">
+            <div class="meta-row">
+              Active low: <span class="mono">{{ "true" if active_low else "false" }}</span>
+            </div>
+            <div class="meta-row">
+              Pins: <span class="mono">{{ pins | join(", ") }}</span>
+            </div>
           </div>
         </header>
 
-        <p class="sub">
-          GPIO <span class="mono">{{ pin }}</span>
-          <span class="sep">|</span>
-          active low: <span class="mono">{{ "true" if active_low else "false" }}</span>
-        </p>
+        <div class="grid" id="grid">
+          {% for pump in pumps %}
+          <article
+            class="pump-card{% if pump.on %} on{% endif %}"
+            data-index="{{ pump.index }}"
+            data-on="{{ "1" if pump.on else "0" }}"
+          >
+            <div class="pump-top">
+              <div class="pump-icon" aria-hidden="true">
+                <div class="pump-shell"></div>
+                <div class="pump-center"></div>
+                <div class="pump-spout"></div>
+                <div class="water"></div>
+              </div>
+              <div class="pump-label">
+                <h2>Pump {{ pump.index + 1 }}</h2>
+                <p>GPIO <span class="mono">{{ pump.pin }}</span></p>
+              </div>
+            </div>
 
-        <div class="controls">
-          <button class="btn on" id="btn-on" type="button">Turn On</button>
-          <button class="btn off" id="btn-off" type="button">Turn Off</button>
+            <div class="status">
+              <span class="dot" data-role="dot"></span>
+              <span class="status-text" data-role="status">Off</span>
+            </div>
+
+            <div class="controls">
+              <button class="btn on" data-action="on" type="button">On</button>
+              <button class="btn off" data-action="off" type="button">Off</button>
+            </div>
+          </article>
+          {% endfor %}
         </div>
 
         <p class="hint" id="hint">Ready.</p>
@@ -36,54 +62,71 @@
     </main>
 
     <script>
-      const statusText = document.getElementById("status-text");
-      const statusDot = document.getElementById("status-dot");
+      const cards = Array.from(document.querySelectorAll(".pump-card"));
       const hint = document.getElementById("hint");
-      const btnOn = document.getElementById("btn-on");
-      const btnOff = document.getElementById("btn-off");
 
-      function setStatus(on) {
-        statusText.textContent = on ? "On" : "Off";
-        statusDot.classList.toggle("on", on);
-        statusDot.classList.toggle("off", !on);
+      function setCardStatus(card, on) {
+        const dot = card.querySelector('[data-role="dot"]');
+        const label = card.querySelector('[data-role="status"]');
+        label.textContent = on ? "On" : "Off";
+        dot.classList.toggle("on", on);
+        dot.classList.toggle("off", !on);
+        card.classList.toggle("on", on);
+      }
+
+      function setCardBusy(card, busy) {
+        card.querySelectorAll("button").forEach((btn) => {
+          btn.disabled = busy;
+        });
       }
 
       async function refreshStatus() {
         try {
           const res = await fetch("/api/status");
           const data = await res.json();
-          setStatus(Boolean(data.on));
+          const relayMap = new Map(
+            (data.relays || []).map((item) => [String(item.index), item])
+          );
+          cards.forEach((card) => {
+            const item = relayMap.get(card.dataset.index);
+            if (item) {
+              setCardStatus(card, Boolean(item.on));
+            }
+          });
           hint.textContent = "Last update: " + new Date().toLocaleTimeString();
         } catch (err) {
           hint.textContent = "Status unavailable.";
         }
       }
 
-      async function setRelay(on) {
-        btnOn.disabled = true;
-        btnOff.disabled = true;
+      async function setRelay(card, on) {
+        setCardBusy(card, true);
         hint.textContent = on ? "Turning on..." : "Turning off...";
+        const index = Number(card.dataset.index);
         try {
           const res = await fetch("/api/relay", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ on }),
+            body: JSON.stringify({ index, on }),
           });
           const data = await res.json();
-          setStatus(Boolean(data.on));
+          setCardStatus(card, Boolean(data.on));
           hint.textContent = data.on ? "Pump is on." : "Pump is off.";
         } catch (err) {
           hint.textContent = "Command failed.";
         } finally {
-          btnOn.disabled = false;
-          btnOff.disabled = false;
+          setCardBusy(card, false);
         }
       }
 
-      btnOn.addEventListener("click", () => setRelay(true));
-      btnOff.addEventListener("click", () => setRelay(false));
+      cards.forEach((card) => {
+        const onBtn = card.querySelector('[data-action="on"]');
+        const offBtn = card.querySelector('[data-action="off"]');
+        onBtn.addEventListener("click", () => setRelay(card, true));
+        offBtn.addEventListener("click", () => setRelay(card, false));
+        setCardStatus(card, card.dataset.on === "1");
+      });
 
-      setStatus({{ "true" if is_on else "false" }});
       refreshStatus();
       setInterval(refreshStatus, 5000);
     </script>

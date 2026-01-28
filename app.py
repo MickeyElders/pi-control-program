@@ -1,7 +1,7 @@
 import os
-from typing import Optional
+from typing import List
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -34,11 +34,36 @@ except ImportError:
             return None
 
 
-PIN = int(os.getenv("RELAY_GPIO", "17"))
+DEFAULT_PINS = "27,22,23,24"
 ACTIVE_LOW = os.getenv("RELAY_ACTIVE_LOW", "1").lower() in {"1", "true", "yes", "on"}
 
-relay = DigitalOutputDevice(PIN, active_high=not ACTIVE_LOW, initial_value=False)
-relay.off()
+
+def parse_pins(value: str) -> List[int]:
+    pins: List[int] = []
+    for part in value.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        pins.append(int(part))
+    return pins
+
+
+pins_env = os.getenv("RELAY_PINS")
+if pins_env:
+    PINS = parse_pins(pins_env)
+else:
+    relay_gpio = os.getenv("RELAY_GPIO")
+    if relay_gpio:
+        PINS = [int(relay_gpio)]
+    else:
+        PINS = parse_pins(DEFAULT_PINS)
+
+if not PINS:
+    raise RuntimeError("No relay pins configured. Set RELAY_PINS or RELAY_GPIO.")
+
+relays = [DigitalOutputDevice(pin, active_high=not ACTIVE_LOW, initial_value=False) for pin in PINS]
+for relay in relays:
+    relay.off()
 
 app = FastAPI(title="Pump Relay Control")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -46,17 +71,21 @@ templates = Jinja2Templates(directory="templates")
 
 
 class RelayCommand(BaseModel):
+    index: int
     on: bool
 
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
+    pumps = [
+        {"index": idx, "pin": pin, "on": relays[idx].is_active} for idx, pin in enumerate(PINS)
+    ]
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
-            "is_on": relay.is_active,
-            "pin": PIN,
+            "pumps": pumps,
+            "pins": PINS,
             "active_low": ACTIVE_LOW,
         },
     )
@@ -64,19 +93,25 @@ def index(request: Request) -> HTMLResponse:
 
 @app.get("/api/status")
 def api_status() -> dict:
-    return {"on": relay.is_active}
+    return {
+        "relays": [
+            {"index": idx, "pin": pin, "on": relays[idx].is_active}
+            for idx, pin in enumerate(PINS)
+        ]
+    }
 
 
 @app.post("/api/relay")
 def api_relay(cmd: RelayCommand) -> dict:
+    if cmd.index < 0 or cmd.index >= len(relays):
+        raise HTTPException(status_code=400, detail="Invalid relay index.")
     if cmd.on:
-        relay.on()
+        relays[cmd.index].on()
     else:
-        relay.off()
-    return {"on": relay.is_active}
+        relays[cmd.index].off()
+    return {"on": relays[cmd.index].is_active}
 
 
 @app.get("/api/ping")
 def api_ping() -> dict:
     return {"ok": True}
-
