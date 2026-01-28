@@ -20,11 +20,12 @@ Open `http://<raspberrypi-ip>:8000`.
 ## Config
 - `RELAY_GPIO` (default `17`): GPIO pin number.
 - `RELAY_ACTIVE_LOW` (default `1`): set to `1` for low-level trigger, `0` for high-level trigger.
+- `GPIOZERO_PIN_FACTORY` (default `lgpio`): GPIO backend (`lgpio` or `rpi`).
 
 ## Systemd + Make automation
 Install and start the service (will check and install system deps):
 ```bash
-make install SERVICE_USER=pi WORKDIR=/home/pi/pi-control-program RELAY_GPIO=17 RELAY_ACTIVE_LOW=1
+make install SERVICE_USER=pi WORKDIR=/home/pi/pi-control-program RELAY_GPIO=17 RELAY_ACTIVE_LOW=1 PIN_FACTORY=lgpio
 ```
 
 Reinstall / uninstall:
@@ -38,6 +39,9 @@ Status / logs:
 make status
 make logs
 ```
+
+Notes:
+- Newer Raspberry Pi OS (bookworm) uses `lgpio`; older versions may need `PIN_FACTORY=rpi`.
 
 ## Remote access
 Use a VPN (Tailscale/ZeroTier) and access the same local URL over the VPN.
