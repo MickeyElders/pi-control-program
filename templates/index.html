@@ -12,14 +12,14 @@
         <header class="panel-header">
           <div>
             <p class="eyebrow">Relay Deck</p>
-            <h1>Water Pump Control</h1>
+            <h1>水泵控制台</h1>
           </div>
           <div class="meta">
             <div class="meta-row">
-              Active low: <span class="mono">{{ "true" if active_low else "false" }}</span>
+              低电平触发: <span class="mono">{{ "true" if active_low else "false" }}</span>
             </div>
             <div class="meta-row">
-              Pins: <span class="mono">{{ pins | join(", ") }}</span>
+              GPIO: <span class="mono">{{ pins | join(", ") }}</span>
             </div>
           </div>
         </header>
@@ -39,25 +39,24 @@
                 <div class="water"></div>
               </div>
               <div class="pump-label">
-                <h2>Pump {{ pump.index + 1 }}</h2>
+                <h2>水泵 {{ pump.index + 1 }}</h2>
                 <p>GPIO <span class="mono">{{ pump.pin }}</span></p>
               </div>
             </div>
 
             <div class="status">
               <span class="dot" data-role="dot"></span>
-              <span class="status-text" data-role="status">Off</span>
+              <span class="status-text" data-role="status">关闭</span>
             </div>
 
             <div class="controls">
-              <button class="btn on" data-action="on" type="button">On</button>
-              <button class="btn off" data-action="off" type="button">Off</button>
+              <button class="btn toggle" data-role="toggle" type="button">打开</button>
             </div>
           </article>
           {% endfor %}
         </div>
 
-        <p class="hint" id="hint">Ready.</p>
+        <p class="hint" id="hint">就绪。</p>
       </section>
     </main>
 
@@ -68,10 +67,15 @@
       function setCardStatus(card, on) {
         const dot = card.querySelector('[data-role="dot"]');
         const label = card.querySelector('[data-role="status"]');
-        label.textContent = on ? "On" : "Off";
+        const toggle = card.querySelector('[data-role="toggle"]');
+        label.textContent = on ? "开启" : "关闭";
         dot.classList.toggle("on", on);
         dot.classList.toggle("off", !on);
         card.classList.toggle("on", on);
+        card.dataset.on = on ? "1" : "0";
+        toggle.textContent = on ? "关闭" : "打开";
+        toggle.classList.toggle("on", !on);
+        toggle.classList.toggle("off", on);
       }
 
       function setCardBusy(card, busy) {
@@ -101,7 +105,7 @@
 
       async function setRelay(card, on) {
         setCardBusy(card, true);
-        hint.textContent = on ? "Turning on..." : "Turning off...";
+        hint.textContent = on ? "正在开启..." : "正在关闭...";
         const index = Number(card.dataset.index);
         try {
           const res = await fetch("/api/relay", {
@@ -111,19 +115,20 @@
           });
           const data = await res.json();
           setCardStatus(card, Boolean(data.on));
-          hint.textContent = data.on ? "Pump is on." : "Pump is off.";
+          hint.textContent = data.on ? "水泵已开启。" : "水泵已关闭。";
         } catch (err) {
-          hint.textContent = "Command failed.";
+          hint.textContent = "指令失败。";
         } finally {
           setCardBusy(card, false);
         }
       }
 
       cards.forEach((card) => {
-        const onBtn = card.querySelector('[data-action="on"]');
-        const offBtn = card.querySelector('[data-action="off"]');
-        onBtn.addEventListener("click", () => setRelay(card, true));
-        offBtn.addEventListener("click", () => setRelay(card, false));
+        const toggle = card.querySelector('[data-role="toggle"]');
+        toggle.addEventListener("click", () => {
+          const nextOn = card.dataset.on !== "1";
+          setRelay(card, nextOn);
+        });
         setCardStatus(card, card.dataset.on === "1");
       });
 

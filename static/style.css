@@ -35,7 +35,7 @@ body {
 }
 
 .panel {
-  width: min(980px, 96vw);
+  width: min(920px, 96vw);
   background: var(--card);
   border-radius: 28px;
   padding: 32px;
@@ -81,9 +81,10 @@ h2 {
 }
 
 .grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 18px;
+  align-items: center;
 }
 
 .pump-card {
@@ -95,6 +96,7 @@ h2 {
   display: grid;
   gap: 14px;
   transition: transform 150ms ease, border 150ms ease;
+  width: min(420px, 100%);
 }
 
 .pump-card.on {
@@ -160,22 +162,23 @@ h2 {
 
 .water {
   position: absolute;
-  right: 1px;
-  top: 36px;
-  width: 14px;
-  height: 26px;
-  border-radius: 8px;
+  right: 0;
+  top: 34px;
+  width: 16px;
+  height: 30px;
+  border-radius: 10px;
   opacity: 0;
   transform-origin: top;
   transform: scaleY(0.4);
   background: repeating-linear-gradient(
     180deg,
-    rgba(42, 121, 200, 0.8) 0px,
-    rgba(42, 121, 200, 0.8) 6px,
-    rgba(42, 121, 200, 0.2) 6px,
-    rgba(42, 121, 200, 0.2) 12px
+    rgba(42, 121, 200, 0.85) 0px,
+    rgba(42, 121, 200, 0.85) 6px,
+    rgba(42, 121, 200, 0.25) 6px,
+    rgba(42, 121, 200, 0.25) 12px
   );
   transition: opacity 150ms ease;
+  filter: drop-shadow(0 6px 6px rgba(42, 121, 200, 0.2));
 }
 
 .pump-card.on .water {
@@ -208,15 +211,14 @@ h2 {
 }
 
 .controls {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  display: flex;
+  justify-content: flex-start;
 }
 
 .btn {
   border: none;
-  padding: 12px 14px;
-  border-radius: 12px;
+  padding: 12px 18px;
+  border-radius: 999px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -293,7 +295,7 @@ h2 {
 }
 
 @media (max-width: 520px) {
-  .controls {
-    grid-template-columns: 1fr;
+  .pump-card {
+    width: 100%;
   }
 }
