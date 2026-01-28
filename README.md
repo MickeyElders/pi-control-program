@@ -42,6 +42,7 @@ make logs
 
 Notes:
 - Newer Raspberry Pi OS (bookworm) uses `lgpio`; older versions may need `PIN_FACTORY=rpi`.
+- `make install` creates a venv with `--system-site-packages` so it can access the system GPIO backend modules.
 
 ## Remote access
 Use a VPN (Tailscale/ZeroTier) and access the same local URL over the VPN.

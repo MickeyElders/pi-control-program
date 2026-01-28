@@ -64,7 +64,7 @@ deps:
 	fi
 
 venv:
-	$(PYTHON) -m venv $(VENV)
+	$(PYTHON) -m venv --system-site-packages $(VENV)
 	$(PIP) install -r requirements.txt
 
 install-service:
