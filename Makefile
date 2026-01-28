@@ -27,8 +27,21 @@ help:
 	@echo "  WORKDIR=/path/to/repo SERVICE_USER=pi RELAY_GPIO=17 RELAY_ACTIVE_LOW=1 PORT=8000"
 
 deps:
-	sudo apt-get update
-	sudo apt-get install -y python3-venv
+	@command -v apt-get >/dev/null 2>&1 || { \
+		echo "apt-get not found. Please install python3 and python3-venv manually."; \
+		exit 1; \
+	}; \
+	missing=""; \
+	for pkg in python3 python3-venv; do \
+		dpkg -s $$pkg >/dev/null 2>&1 || missing="$$missing $$pkg"; \
+	done; \
+	if [ -n "$$missing" ]; then \
+		echo "Installing missing packages:$$missing"; \
+		sudo apt-get update; \
+		sudo apt-get install -y $$missing; \
+	else \
+		echo "System dependencies already installed."; \
+	fi
 
 venv:
 	$(PYTHON) -m venv $(VENV)
@@ -46,7 +59,7 @@ install-service:
 	rm -f $$tmp; \
 	sudo systemctl daemon-reload
 
-install: venv install-service
+install: deps venv install-service
 	sudo systemctl enable --now $(SERVICE_NAME)
 
 reinstall: uninstall install

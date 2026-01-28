@@ -22,12 +22,7 @@ Open `http://<raspberrypi-ip>:8000`.
 - `RELAY_ACTIVE_LOW` (default `1`): set to `1` for low-level trigger, `0` for high-level trigger.
 
 ## Systemd + Make automation
-Install system deps (once):
-```bash
-make deps
-```
-
-Install and start the service:
+Install and start the service (will check and install system deps):
 ```bash
 make install SERVICE_USER=pi WORKDIR=/home/pi/pi-control-program RELAY_GPIO=17 RELAY_ACTIVE_LOW=1
 ```
