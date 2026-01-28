@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pump Control</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <main class="stage">
+      <section class="card" aria-live="polite">
+        <header class="header">
+          <div>
+            <p class="eyebrow">Relay</p>
+            <h1>Water Pump</h1>
+          </div>
+          <div class="status" id="status-wrap">
+            <span id="status-dot" class="dot"></span>
+            <span id="status-text">Checking...</span>
+          </div>
+        </header>
+
+        <p class="sub">
+          GPIO <span class="mono">{{ pin }}</span>
+          <span class="sep">|</span>
+          active low: <span class="mono">{{ "true" if active_low else "false" }}</span>
+        </p>
+
+        <div class="controls">
+          <button class="btn on" id="btn-on" type="button">Turn On</button>
+          <button class="btn off" id="btn-off" type="button">Turn Off</button>
+        </div>
+
+        <p class="hint" id="hint">Ready.</p>
+      </section>
+    </main>
+
+    <script>
+      const statusText = document.getElementById("status-text");
+      const statusDot = document.getElementById("status-dot");
+      const hint = document.getElementById("hint");
+      const btnOn = document.getElementById("btn-on");
+      const btnOff = document.getElementById("btn-off");
+
+      function setStatus(on) {
+        statusText.textContent = on ? "On" : "Off";
+        statusDot.classList.toggle("on", on);
+        statusDot.classList.toggle("off", !on);
+      }
+
+      async function refreshStatus() {
+        try {
+          const res = await fetch("/api/status");
+          const data = await res.json();
+          setStatus(Boolean(data.on));
+          hint.textContent = "Last update: " + new Date().toLocaleTimeString();
+        } catch (err) {
+          hint.textContent = "Status unavailable.";
+        }
+      }
+
+      async function setRelay(on) {
+        btnOn.disabled = true;
+        btnOff.disabled = true;
+        hint.textContent = on ? "Turning on..." : "Turning off...";
+        try {
+          const res = await fetch("/api/relay", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ on }),
+          });
+          const data = await res.json();
+          setStatus(Boolean(data.on));
+          hint.textContent = data.on ? "Pump is on." : "Pump is off.";
+        } catch (err) {
+          hint.textContent = "Command failed.";
+        } finally {
+          btnOn.disabled = false;
+          btnOff.disabled = false;
+        }
+      }
+
+      btnOn.addEventListener("click", () => setRelay(true));
+      btnOff.addEventListener("click", () => setRelay(false));
+
+      setStatus({{ "true" if is_on else "false" }});
+      refreshStatus();
+      setInterval(refreshStatus, 5000);
+    </script>
+  </body>
+</html>
