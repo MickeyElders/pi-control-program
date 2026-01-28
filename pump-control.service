@@ -1,0 +1,16 @@
+[Unit]
+Description=Pump Relay Control Web Service
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/pi-control-program
+Environment=RELAY_GPIO=17
+Environment=RELAY_ACTIVE_LOW=1
+ExecStart=/home/pi/pi-control-program/.venv/bin/uvicorn app:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
