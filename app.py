@@ -55,6 +55,45 @@ def clamp_level(value: int) -> int:
     return max(0, min(100, value))
 
 
+def clamp(value: float, min_value: float, max_value: float) -> float:
+    return max(min_value, min(max_value, value))
+
+
+def lerp(a: float, b: float, t: float) -> float:
+    return a + (b - a) * t
+
+
+def lerp_color(color_a: tuple[int, int, int], color_b: tuple[int, int, int], t: float) -> tuple[int, int, int]:
+    return (
+        int(lerp(color_a[0], color_b[0], t)),
+        int(lerp(color_a[1], color_b[1], t)),
+        int(lerp(color_a[2], color_b[2], t)),
+    )
+
+
+def ph_to_color(ph: float) -> tuple[int, int, int]:
+    ph = clamp(ph, 0.0, 14.0)
+    acidic = (210, 74, 74)
+    neutral = (88, 168, 140)
+    alkaline = (76, 120, 208)
+    if ph <= 7.0:
+        return lerp_color(acidic, neutral, ph / 7.0)
+    return lerp_color(neutral, alkaline, (ph - 7.0) / 7.0)
+
+
+def temp_adjust(color: tuple[int, int, int], temp_c: float) -> tuple[int, int, int]:
+    warm = (226, 124, 54)
+    cool = (70, 130, 210)
+    delta = clamp((temp_c - 25.0) / 20.0, -1.0, 1.0)
+    if delta >= 0:
+        return lerp_color(color, warm, delta * 0.6)
+    return lerp_color(color, cool, -delta * 0.6)
+
+
+def color_for_ph_temp(ph: float, temp_c: float) -> tuple[int, int, int]:
+    return temp_adjust(ph_to_color(ph), temp_c)
+
+
 def parse_levels(value: str, count: int, defaults: List[int]) -> List[int]:
     levels: List[int] = []
     for part in value.split(","):
@@ -113,6 +152,11 @@ tank_temps = {"soak": tank_temps_list[0], "fresh": tank_temps_list[1], "heat": t
 ph_env = os.getenv("TANK_PHS", "")
 tank_phs_list = parse_float_values(ph_env, 3, DEFAULT_PHS) if ph_env else DEFAULT_PHS[:]
 tank_phs = {"soak": tank_phs_list[0], "fresh": tank_phs_list[1], "heat": tank_phs_list[2]}
+tank_colors = {
+    "soak": color_for_ph_temp(tank_phs["soak"], tank_temps["soak"]),
+    "fresh": color_for_ph_temp(tank_phs["fresh"], tank_temps["fresh"]),
+    "heat": color_for_ph_temp(tank_phs["heat"], tank_temps["heat"]),
+}
 
 app = FastAPI(title="Pump Relay Control")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -139,6 +183,7 @@ def index(request: Request) -> HTMLResponse:
             "tank_levels": tank_levels,
             "tank_temps": tank_temps,
             "tank_phs": tank_phs,
+            "tank_colors": tank_colors,
         },
     )
 
