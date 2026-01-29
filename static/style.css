@@ -772,20 +772,24 @@ h2 {
 
   .pump-card {
     padding: 14px;
-    min-height: 200px;
+    min-height: 170px;
   }
 
   .pump-label h2 {
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .pump-route {
-    font-size: 12px;
+    display: none;
+  }
+
+  .pump-meta {
+    display: none;
   }
 
   .controls .btn {
-    padding: 10px 12px;
-    font-size: 12px;
+    padding: 8px 10px;
+    font-size: 11px;
   }
 
   .tank-percent {
