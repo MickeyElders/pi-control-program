@@ -717,9 +717,84 @@ h2 {
 }
 
 @media (max-width: 720px) {
+  :root {
+    --tank-height: 260px;
+    --tank-gap: 12px;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
   .panel {
-    padding: 24px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    padding: 18px;
+  }
+
+  .panel-header {
+    gap: 12px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .meta {
+    font-size: 12px;
+  }
+
+  .tank-row {
+    grid-template-columns: 0.6fr 1.1fr 0.45fr 0.85fr;
+  }
+
+  .tank.soak .tank-body,
+  .tank.small .tank-body {
+    width: 100%;
+  }
+
+  .lift-panel {
+    height: var(--tank-height);
+  }
+
+  .lift-controls .btn {
+    width: 84px;
+    padding: 8px 10px;
+  }
+
+  .lift-status {
+    width: 84px;
+    font-size: 11px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .pump-card {
+    padding: 14px;
+    min-height: 200px;
+  }
+
+  .pump-label h2 {
+    font-size: 16px;
+  }
+
+  .pump-route {
+    font-size: 12px;
+  }
+
+  .controls .btn {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .tank-percent {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+
+  .tank-metrics {
+    font-size: 11px;
+    padding: 4px 8px;
   }
 }
