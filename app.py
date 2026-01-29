@@ -36,6 +36,8 @@ except ImportError:
 
 DEFAULT_PINS = "27,22,23,10"
 DEFAULT_LEVELS = [72, 58, 46]
+DEFAULT_TEMPS = [32.5, 22.0, 45.0]
+DEFAULT_PHS = [6.8, 7.2, 6.5]
 ACTIVE_LOW = os.getenv("RELAY_ACTIVE_LOW", "1").lower() in {"1", "true", "yes", "on"}
 
 
@@ -68,6 +70,21 @@ def parse_levels(value: str, count: int, defaults: List[int]) -> List[int]:
     return levels[:count]
 
 
+def parse_float_values(value: str, count: int, defaults: List[float]) -> List[float]:
+    values: List[float] = []
+    for part in value.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            values.append(float(part))
+        except ValueError:
+            continue
+    while len(values) < count:
+        values.append(defaults[len(values)])
+    return values[:count]
+
+
 pins_env = os.getenv("RELAY_PINS")
 if pins_env:
     PINS = parse_pins(pins_env)
@@ -88,6 +105,14 @@ for relay in relays:
 levels_env = os.getenv("TANK_LEVELS", "")
 tank_levels_list = parse_levels(levels_env, 3, DEFAULT_LEVELS) if levels_env else DEFAULT_LEVELS[:]
 tank_levels = {"soak": tank_levels_list[0], "fresh": tank_levels_list[1], "heat": tank_levels_list[2]}
+
+temps_env = os.getenv("TANK_TEMPS", "")
+tank_temps_list = parse_float_values(temps_env, 3, DEFAULT_TEMPS) if temps_env else DEFAULT_TEMPS[:]
+tank_temps = {"soak": tank_temps_list[0], "fresh": tank_temps_list[1], "heat": tank_temps_list[2]}
+
+ph_env = os.getenv("TANK_PHS", "")
+tank_phs_list = parse_float_values(ph_env, 3, DEFAULT_PHS) if ph_env else DEFAULT_PHS[:]
+tank_phs = {"soak": tank_phs_list[0], "fresh": tank_phs_list[1], "heat": tank_phs_list[2]}
 
 app = FastAPI(title="Pump Relay Control")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -112,6 +137,8 @@ def index(request: Request) -> HTMLResponse:
             "pins": PINS,
             "active_low": ACTIVE_LOW,
             "tank_levels": tank_levels,
+            "tank_temps": tank_temps,
+            "tank_phs": tank_phs,
         },
     )
 

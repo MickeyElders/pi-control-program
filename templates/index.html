@@ -25,9 +25,29 @@
           </div>
         </header>
         <div class="tank-row">
+          <div class="lift">
+            <div class="lift-rail">
+              <div class="lift-carriage">
+                <div class="lift-indicator" id="lift-indicator">
+                  <div class="arrow up"></div>
+                  <div class="arrow down"></div>
+                </div>
+              </div>
+            </div>
+            <div class="lift-status" id="lift-status">已停止</div>
+            <div class="lift-controls">
+              <button class="btn lift-up" id="lift-up" type="button">升高</button>
+              <button class="btn lift-down" id="lift-down" type="button">下降</button>
+              <button class="btn lift-stop" id="lift-stop" type="button">停止</button>
+            </div>
+          </div>
           <div class="tank soak" style="--level: {{ tank_levels.soak }}">
             <div class="tank-body">
               <div class="tank-percent">{{ tank_levels.soak }}%</div>
+              <div class="tank-metrics">
+                <span>温度 {{ "%.1f"|format(tank_temps.soak) }}°C</span>
+                <span>pH {{ "%.2f"|format(tank_phs.soak) }}</span>
+              </div>
               <div class="tank-liquid">
                 <div class="surface"></div>
                 <div class="surface two"></div>
@@ -49,6 +69,10 @@
             <div class="tank small fresh" style="--level: {{ tank_levels.fresh }}">
               <div class="tank-body">
                 <div class="tank-percent">{{ tank_levels.fresh }}%</div>
+                <div class="tank-metrics">
+                  <span>温度 {{ "%.1f"|format(tank_temps.fresh) }}°C</span>
+                  <span>pH {{ "%.2f"|format(tank_phs.fresh) }}</span>
+                </div>
                 <div class="tank-liquid">
                   <div class="surface"></div>
                   <div class="surface two"></div>
@@ -59,6 +83,10 @@
             <div class="tank small heat" style="--level: {{ tank_levels.heat }}">
               <div class="tank-body">
                 <div class="tank-percent">{{ tank_levels.heat }}%</div>
+                <div class="tank-metrics">
+                  <span>温度 {{ "%.1f"|format(tank_temps.heat) }}°C</span>
+                  <span>pH {{ "%.2f"|format(tank_phs.heat) }}</span>
+                </div>
                 <div class="tank-liquid">
                   <div class="surface"></div>
                   <div class="surface two"></div>
@@ -117,6 +145,11 @@
           pipe,
         ])
       );
+      const liftIndicator = document.getElementById("lift-indicator");
+      const liftStatus = document.getElementById("lift-status");
+      const liftUp = document.getElementById("lift-up");
+      const liftDown = document.getElementById("lift-down");
+      const liftStop = document.getElementById("lift-stop");
 
       function setPipeFlow(index, on) {
         const pipe = pipes.get(String(index));
@@ -138,6 +171,19 @@
         toggle.classList.toggle("on", !on);
         toggle.classList.toggle("off", on);
         setPipeFlow(card.dataset.index, on);
+      }
+
+      function setLiftState(state) {
+        liftIndicator.classList.toggle("up", state === "up");
+        liftIndicator.classList.toggle("down", state === "down");
+        liftIndicator.classList.toggle("idle", state === "stop");
+        if (state === "up") {
+          liftStatus.textContent = "正在抬起";
+        } else if (state === "down") {
+          liftStatus.textContent = "正在降低";
+        } else {
+          liftStatus.textContent = "已停止";
+        }
       }
 
       function setCardBusy(card, busy) {
@@ -193,6 +239,11 @@
         });
         setCardStatus(card, card.dataset.on === "1");
       });
+
+      liftUp.addEventListener("click", () => setLiftState("up"));
+      liftDown.addEventListener("click", () => setLiftState("down"));
+      liftStop.addEventListener("click", () => setLiftState("stop"));
+      setLiftState("stop");
 
       refreshStatus();
       setInterval(refreshStatus, 1000);
