@@ -9,6 +9,7 @@
   <body>
     <main class="stage">
       <section class="panel" aria-live="polite">
+        {% set routes = ["清水桶 → 浸泡桶", "浸泡桶 → 清水桶", "加热桶 → 浸泡桶", "浸泡桶 → 加热桶"] %}
         <div class="tank-row">
           <div class="tank soak" style="--level: {{ tank_levels.soak }}">
             <div class="tank-body">
@@ -73,8 +74,11 @@
                 <div class="water"></div>
               </div>
               <div class="pump-label">
-                <h2>水泵 {{ pump.index + 1 }}</h2>
-                <p>GPIO <span class="mono">{{ pump.pin }}</span></p>
+                <h2>{{ pump.index + 1 }}号开关</h2>
+                <p class="pump-route">
+                  {{ routes[pump.index] if pump.index < routes | length else "未配置" }}
+                </p>
+                <p class="pump-meta">GPIO <span class="mono">{{ pump.pin }}</span></p>
               </div>
             </div>
 
