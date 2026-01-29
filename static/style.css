@@ -48,7 +48,7 @@ body {
 
 .tank-row {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(80px, 120px) minmax(200px, 1fr);
+  grid-template-columns: minmax(140px, 180px) minmax(240px, 1fr) minmax(80px, 120px) minmax(200px, 1fr);
   column-gap: 0;
   row-gap: 16px;
   align-items: end;
@@ -72,7 +72,9 @@ body {
 .lift-panel {
   display: grid;
   gap: 10px;
-  margin-top: 10px;
+  align-content: end;
+  height: var(--tank-height);
+  padding-right: 10px;
 }
 
 .lift-rail {
@@ -698,6 +700,11 @@ h2 {
   .tank-row {
     grid-template-columns: 1fr;
     align-items: stretch;
+  }
+
+  .lift-panel {
+    height: auto;
+    padding-right: 0;
   }
 
   .tank.soak .tank-body,

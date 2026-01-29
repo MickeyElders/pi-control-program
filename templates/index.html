@@ -25,6 +25,14 @@
           </div>
         </header>
         <div class="tank-row">
+          <div class="lift-panel">
+            <div class="lift-status" id="lift-status">已停止</div>
+            <div class="lift-controls">
+              <button class="btn lift-up" id="lift-up" type="button">升高</button>
+              <button class="btn lift-down" id="lift-down" type="button">下降</button>
+              <button class="btn lift-stop" id="lift-stop" type="button">停止</button>
+            </div>
+          </div>
           <div class="tank soak" style="--level: {{ tank_levels.soak }}; --liquid-base: {{ tank_colors.soak[0] }} {{ tank_colors.soak[1] }} {{ tank_colors.soak[2] }}">
             <div class="tank-body">
               <div class="lift-rail" aria-hidden="true">
@@ -46,14 +54,6 @@
               </div>
             </div>
             <div class="tank-label">浸泡桶</div>
-            <div class="lift-panel">
-              <div class="lift-status" id="lift-status">已停止</div>
-              <div class="lift-controls">
-                <button class="btn lift-up" id="lift-up" type="button">升高</button>
-                <button class="btn lift-down" id="lift-down" type="button">下降</button>
-                <button class="btn lift-stop" id="lift-stop" type="button">停止</button>
-              </div>
-            </div>
           </div>
           <div class="pipe-column" aria-hidden="true">
             <div class="pipe-group fresh">
