@@ -10,6 +10,8 @@
   --accent: #c76a2a;
   --water: #2a79c8;
   --shadow: 0 24px 60px rgba(43, 31, 18, 0.18);
+  --tank-height: 240px;
+  --tank-gap: 18px;
 }
 
 * {
@@ -42,6 +44,123 @@ body {
   box-shadow: var(--shadow);
   border: 1px solid var(--edge);
   animation: rise 650ms ease-out;
+}
+
+.tank-row {
+  display: flex;
+  gap: 24px;
+  align-items: flex-end;
+  margin-bottom: 28px;
+}
+
+.tank {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  --level: 60;
+  --liquid-base: 42 121 200;
+}
+
+.tank-stack {
+  display: grid;
+  gap: var(--tank-gap);
+}
+
+.tank-body {
+  position: relative;
+  border-radius: 18px 18px 26px 26px;
+  border: 3px solid rgba(27, 26, 23, 0.65);
+  background: linear-gradient(180deg, #fdf5e7 0%, #f5e7d2 100%);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.7);
+  overflow: hidden;
+}
+
+.tank.soak .tank-body {
+  height: var(--tank-height);
+  width: min(360px, 60vw);
+}
+
+.tank.small .tank-body {
+  height: calc((var(--tank-height) - var(--tank-gap)) / 2);
+  width: min(240px, 46vw);
+}
+
+.tank.soak {
+  --liquid-base: 55 141 167;
+}
+
+.tank.fresh {
+  --liquid-base: 42 121 200;
+}
+
+.tank.heat {
+  --liquid-base: 199 106 42;
+}
+
+.tank-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.tank-percent {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(27, 26, 23, 0.7);
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 999px;
+  padding: 4px 10px;
+  border: 1px solid rgba(27, 26, 23, 0.1);
+}
+
+.tank-liquid {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  height: calc(var(--level) * 1%);
+  min-height: 10px;
+  max-height: 100%;
+  border-radius: 16px;
+  background: linear-gradient(
+    180deg,
+    rgb(var(--liquid-base) / calc(0.35 + var(--level) * 0.004)),
+    rgb(var(--liquid-base) / calc(0.12 + var(--level) * 0.003))
+  );
+  box-shadow:
+    inset 0 8px 12px rgba(0, 0, 0, 0.16),
+    0 6px 10px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  transition: height 400ms ease, background 400ms ease;
+}
+
+.tank.small .tank-liquid {
+  min-height: 8px;
+}
+
+.surface {
+  position: absolute;
+  left: -20%;
+  top: -12px;
+  width: 140%;
+  height: 24px;
+  background:
+    radial-gradient(circle at 10% 60%, rgb(var(--liquid-base) / 0.55) 0 35%, transparent 45%),
+    radial-gradient(circle at 40% 50%, rgb(var(--liquid-base) / 0.45) 0 38%, transparent 46%),
+    radial-gradient(circle at 70% 55%, rgb(var(--liquid-base) / 0.5) 0 36%, transparent 44%),
+    radial-gradient(circle at 95% 60%, rgb(var(--liquid-base) / 0.42) 0 30%, transparent 40%);
+  opacity: 0.8;
+  animation: wave 2.6s linear infinite;
+}
+
+.surface.two {
+  top: -6px;
+  opacity: 0.6;
+  animation: wave 3.8s linear reverse infinite;
 }
 
 .panel-header {
@@ -279,9 +398,28 @@ h2 {
   }
 }
 
+@keyframes wave {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(30%);
+  }
+}
+
 @media (max-width: 720px) {
   .panel {
     padding: 24px;
+  }
+
+  .tank-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tank.soak .tank-body,
+  .tank.small .tank-body {
+    width: 100%;
   }
 
   .panel-header {

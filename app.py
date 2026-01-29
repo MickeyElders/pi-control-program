@@ -35,6 +35,7 @@ except ImportError:
 
 
 DEFAULT_PINS = "27,22,23,10,9,11"
+DEFAULT_LEVELS = [72, 58, 46]
 ACTIVE_LOW = os.getenv("RELAY_ACTIVE_LOW", "1").lower() in {"1", "true", "yes", "on"}
 
 
@@ -46,6 +47,25 @@ def parse_pins(value: str) -> List[int]:
             continue
         pins.append(int(part))
     return pins
+
+
+def clamp_level(value: int) -> int:
+    return max(0, min(100, value))
+
+
+def parse_levels(value: str, count: int, defaults: List[int]) -> List[int]:
+    levels: List[int] = []
+    for part in value.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            levels.append(clamp_level(int(float(part))))
+        except ValueError:
+            continue
+    while len(levels) < count:
+        levels.append(defaults[len(levels)])
+    return levels[:count]
 
 
 pins_env = os.getenv("RELAY_PINS")
@@ -64,6 +84,10 @@ if not PINS:
 relays = [DigitalOutputDevice(pin, active_high=not ACTIVE_LOW, initial_value=False) for pin in PINS]
 for relay in relays:
     relay.off()
+
+levels_env = os.getenv("TANK_LEVELS", "")
+tank_levels_list = parse_levels(levels_env, 3, DEFAULT_LEVELS) if levels_env else DEFAULT_LEVELS[:]
+tank_levels = {"soak": tank_levels_list[0], "fresh": tank_levels_list[1], "heat": tank_levels_list[2]}
 
 app = FastAPI(title="Pump Relay Control")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -87,6 +111,7 @@ def index(request: Request) -> HTMLResponse:
             "pumps": pumps,
             "pins": PINS,
             "active_low": ACTIVE_LOW,
+            "tank_levels": tank_levels,
         },
     )
 

@@ -15,6 +15,7 @@ SERVICE_USER ?= $(USER)
 RELAY_GPIO ?=
 RELAY_PINS ?= $(if $(strip $(RELAY_GPIO)),$(RELAY_GPIO),27,22,23,10)
 RELAY_ACTIVE_LOW ?= 1
+TANK_LEVELS ?= 72,58,46
 
 .PHONY: help deps venv install-service install reinstall uninstall start stop restart status logs
 
@@ -26,7 +27,7 @@ help:
 	@echo "make start|stop|restart|status|logs"
 	@echo ""
 	@echo "Overrides:"
-	@echo "  WORKDIR=/path/to/repo SERVICE_USER=pi RELAY_PINS=27,22,23,10 RELAY_ACTIVE_LOW=1 PIN_FACTORY=lgpio PORT=8000"
+	@echo "  WORKDIR=/path/to/repo SERVICE_USER=pi RELAY_PINS=27,22,23,10 RELAY_ACTIVE_LOW=1 TANK_LEVELS=72,58,46 PIN_FACTORY=lgpio PORT=8000"
 
 deps:
 	@command -v apt-get >/dev/null 2>&1 || { \
@@ -75,6 +76,7 @@ install-service:
 	    -e "s|^ExecStart=.*|ExecStart=$(UVICORN) app:app --host 0.0.0.0 --port $(PORT)|" \
 	    -e "s|^Environment=RELAY_PINS=.*|Environment=RELAY_PINS=$(RELAY_PINS)|" \
 	    -e "s|^Environment=RELAY_ACTIVE_LOW=.*|Environment=RELAY_ACTIVE_LOW=$(RELAY_ACTIVE_LOW)|" \
+	    -e "s|^Environment=TANK_LEVELS=.*|Environment=TANK_LEVELS=$(TANK_LEVELS)|" \
 	    -e "s|^Environment=GPIOZERO_PIN_FACTORY=.*|Environment=GPIOZERO_PIN_FACTORY=$(PIN_FACTORY)|" \
 	    $(SERVICE_FILE) > $$tmp; \
 	sudo install -m 644 $$tmp $(SYSTEMD_DIR)/$(SERVICE_NAME); \

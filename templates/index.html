@@ -9,6 +9,40 @@
   <body>
     <main class="stage">
       <section class="panel" aria-live="polite">
+        <div class="tank-row">
+          <div class="tank soak" style="--level: {{ tank_levels.soak }}">
+            <div class="tank-body">
+              <div class="tank-percent">{{ tank_levels.soak }}%</div>
+              <div class="tank-liquid">
+                <div class="surface"></div>
+                <div class="surface two"></div>
+              </div>
+            </div>
+            <div class="tank-label">浸泡桶</div>
+          </div>
+          <div class="tank-stack">
+            <div class="tank small fresh" style="--level: {{ tank_levels.fresh }}">
+              <div class="tank-body">
+                <div class="tank-percent">{{ tank_levels.fresh }}%</div>
+                <div class="tank-liquid">
+                  <div class="surface"></div>
+                  <div class="surface two"></div>
+                </div>
+              </div>
+              <div class="tank-label">清水桶</div>
+            </div>
+            <div class="tank small heat" style="--level: {{ tank_levels.heat }}">
+              <div class="tank-body">
+                <div class="tank-percent">{{ tank_levels.heat }}%</div>
+                <div class="tank-liquid">
+                  <div class="surface"></div>
+                  <div class="surface two"></div>
+                </div>
+              </div>
+              <div class="tank-label">加热桶</div>
+            </div>
+          </div>
+        </div>
         <header class="panel-header">
           <div>
             <p class="eyebrow">Relay Deck</p>
@@ -133,7 +167,7 @@
       });
 
       refreshStatus();
-      setInterval(refreshStatus, 5000);
+      setInterval(refreshStatus, 1000);
     </script>
   </body>
 </html>

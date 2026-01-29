@@ -8,6 +8,7 @@ User=pi
 WorkingDirectory=/home/pi/pi-control-program
 Environment=RELAY_PINS=27,22,23,10
 Environment=RELAY_ACTIVE_LOW=1
+Environment=TANK_LEVELS=72,58,46
 Environment=GPIOZERO_PIN_FACTORY=lgpio
 ExecStart=/home/pi/pi-control-program/.venv/bin/uvicorn app:app --host 0.0.0.0 --port 8000
 Restart=on-failure
