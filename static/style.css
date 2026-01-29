@@ -719,53 +719,7 @@ h2 {
 @media (max-width: 720px) {
   .panel {
     padding: 24px;
-  }
-
-  .grid {
-    grid-template-columns: repeat(2, minmax(180px, 1fr));
-  }
-
-  .tank-row {
-    grid-template-columns: 1fr;
-    align-items: stretch;
-  }
-
-  .lift-panel {
-    height: auto;
-    padding-right: 0;
-  }
-
-  .tank.soak .tank-body,
-  .tank.small .tank-body {
-    width: 100%;
-  }
-
-  .pipe-column {
-    width: 100%;
-    height: auto;
-    grid-template-columns: 1fr;
-  }
-
-  .panel-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .header-actions {
-    width: 100%;
-  }
-
-  .meta {
-    text-align: left;
-  }
-}
-
-@media (max-width: 520px) {
-  .pump-card {
-    width: 100%;
-  }
-
-  .grid {
-    grid-template-columns: 1fr;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
