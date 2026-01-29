@@ -72,7 +72,7 @@ body {
 .lift-panel {
   display: grid;
   gap: 10px;
-  align-content: end;
+  align-content: start;
   height: var(--tank-height);
   padding-right: 8px;
   padding-top: 12px;
@@ -161,7 +161,7 @@ body {
 
 .lift-controls {
   display: grid;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
 }
 
