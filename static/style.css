@@ -200,10 +200,9 @@ h2 {
 }
 
 .grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 18px;
-  align-items: center;
 }
 
 .pump-card {
@@ -216,7 +215,7 @@ h2 {
   flex-direction: column;
   gap: 14px;
   transition: transform 150ms ease, border 150ms ease;
-  width: min(420px, 100%);
+  width: 100%;
   min-height: 240px;
 }
 
