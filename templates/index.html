@@ -15,6 +15,9 @@
             <p class="eyebrow">Relay Deck</p>
             <h1>PID水循环控制</h1>
           </div>
+          <div class="header-actions">
+            <button class="btn debug-toggle" id="debug-toggle" type="button">调试模式</button>
+          </div>
           <div class="meta">
             <div class="meta-row">
               低电平触发: <span class="mono">{{ "true" if active_low else "false" }}</span>
@@ -150,6 +153,7 @@
       const liftUp = document.getElementById("lift-up");
       const liftDown = document.getElementById("lift-down");
       const liftStop = document.getElementById("lift-stop");
+      const debugToggle = document.getElementById("debug-toggle");
 
       function setPipeFlow(index, on) {
         const pipe = pipes.get(String(index));
@@ -244,6 +248,11 @@
       liftDown.addEventListener("click", () => setLiftState("down"));
       liftStop.addEventListener("click", () => setLiftState("stop"));
       setLiftState("stop");
+
+      debugToggle.addEventListener("click", () => {
+        document.body.classList.toggle("debug");
+        debugToggle.classList.toggle("active");
+      });
 
       refreshStatus();
       setInterval(refreshStatus, 1000);

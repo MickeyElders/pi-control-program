@@ -401,6 +401,26 @@ body {
   margin-bottom: 24px;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.debug-toggle {
+  background: rgba(27, 26, 23, 0.12);
+  color: rgba(27, 26, 23, 0.85);
+  border: 1px solid rgba(27, 26, 23, 0.2);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  box-shadow: none;
+}
+
+.debug-toggle.active {
+  background: var(--accent);
+  color: #fff7ea;
+}
+
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.18em;
@@ -725,6 +745,10 @@ h2 {
   .panel-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
   }
 
   .meta {
