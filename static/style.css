@@ -10,7 +10,7 @@
   --accent: #c76a2a;
   --water: #2a79c8;
   --shadow: 0 24px 60px rgba(43, 31, 18, 0.18);
-  --tank-height: 240px;
+  --tank-height: 300px;
   --tank-gap: 18px;
 }
 
@@ -47,9 +47,10 @@ body {
 }
 
 .tank-row {
-  display: flex;
-  gap: 24px;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(90px, 140px) minmax(220px, 1fr);
+  gap: 16px;
+  align-items: end;
   margin-bottom: 28px;
 }
 
@@ -64,6 +65,62 @@ body {
 .tank-stack {
   display: grid;
   gap: var(--tank-gap);
+}
+
+.pipe-column {
+  display: grid;
+  gap: var(--tank-gap);
+  height: var(--tank-height);
+  align-self: end;
+  align-content: space-between;
+}
+
+.pipe-group {
+  display: grid;
+  gap: 10px;
+  align-content: center;
+  justify-items: stretch;
+  min-height: calc((var(--tank-height) - var(--tank-gap)) / 2);
+}
+
+.pipe-group.fresh {
+  --pipe-color: 42 121 200;
+}
+
+.pipe-group.heat {
+  --pipe-color: 199 106 42;
+}
+
+.pipe {
+  position: relative;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(27, 26, 23, 0.22);
+  border: 2px solid rgba(27, 26, 23, 0.35);
+  overflow: hidden;
+}
+
+.pipe-flow {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    rgb(var(--pipe-color) / 0.85) 0 14px,
+    rgb(var(--pipe-color) / 0.35) 14px 28px
+  );
+}
+
+.pipe.on .pipe-flow {
+  opacity: 1;
+}
+
+.pipe.to-right.on .pipe-flow {
+  animation: pipe-right 0.8s linear infinite;
+}
+
+.pipe.to-left.on .pipe-flow {
+  animation: pipe-left 0.8s linear infinite;
 }
 
 .tank-body {
@@ -426,6 +483,24 @@ h2 {
   }
 }
 
+@keyframes pipe-right {
+  0% {
+    transform: translateX(-40%);
+  }
+  100% {
+    transform: translateX(40%);
+  }
+}
+
+@keyframes pipe-left {
+  0% {
+    transform: translateX(40%);
+  }
+  100% {
+    transform: translateX(-40%);
+  }
+}
+
 @media (max-width: 720px) {
   .panel {
     padding: 24px;
@@ -436,13 +511,19 @@ h2 {
   }
 
   .tank-row {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: 1fr;
+    align-items: stretch;
   }
 
   .tank.soak .tank-body,
   .tank.small .tank-body {
     width: 100%;
+  }
+
+  .pipe-column {
+    width: 100%;
+    height: auto;
+    grid-template-columns: 1fr;
   }
 
   .panel-header {

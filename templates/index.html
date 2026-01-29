@@ -35,6 +35,16 @@
             </div>
             <div class="tank-label">浸泡桶</div>
           </div>
+          <div class="pipe-column" aria-hidden="true">
+            <div class="pipe-group fresh">
+              <div class="pipe to-left" data-pipe="0"><div class="pipe-flow"></div></div>
+              <div class="pipe to-right" data-pipe="1"><div class="pipe-flow"></div></div>
+            </div>
+            <div class="pipe-group heat">
+              <div class="pipe to-left" data-pipe="2"><div class="pipe-flow"></div></div>
+              <div class="pipe to-right" data-pipe="3"><div class="pipe-flow"></div></div>
+            </div>
+          </div>
           <div class="tank-stack">
             <div class="tank small fresh" style="--level: {{ tank_levels.fresh }}">
               <div class="tank-body">
@@ -101,6 +111,19 @@
     <script>
       const cards = Array.from(document.querySelectorAll(".pump-card"));
       const hint = document.getElementById("hint");
+      const pipes = new Map(
+        Array.from(document.querySelectorAll(".pipe")).map((pipe) => [
+          pipe.dataset.pipe,
+          pipe,
+        ])
+      );
+
+      function setPipeFlow(index, on) {
+        const pipe = pipes.get(String(index));
+        if (pipe) {
+          pipe.classList.toggle("on", on);
+        }
+      }
 
       function setCardStatus(card, on) {
         const dot = card.querySelector('[data-role="dot"]');
@@ -114,6 +137,7 @@
         toggle.textContent = on ? "关闭" : "打开";
         toggle.classList.toggle("on", !on);
         toggle.classList.toggle("off", on);
+        setPipeFlow(card.dataset.index, on);
       }
 
       function setCardBusy(card, busy) {
