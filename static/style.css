@@ -48,7 +48,7 @@ body {
 
 .tank-row {
   display: grid;
-  grid-template-columns: minmax(140px, 180px) minmax(240px, 1fr) minmax(80px, 120px) minmax(200px, 1fr);
+  grid-template-columns: minmax(120px, 150px) minmax(240px, 1fr) minmax(80px, 120px) minmax(200px, 1fr);
   column-gap: 0;
   row-gap: 16px;
   align-items: end;
@@ -77,6 +77,7 @@ body {
   padding-right: 8px;
   padding-top: 12px;
   padding-bottom: 12px;
+  justify-items: start;
 }
 
 .lift-rail {
@@ -157,6 +158,8 @@ body {
   border-radius: 999px;
   padding: 6px 10px;
   border: 1px solid rgba(27, 26, 23, 0.1);
+  width: 96px;
+  text-align: center;
 }
 
 .lift-controls {
