@@ -163,13 +163,14 @@ body {
   display: grid;
   gap: 12px;
   width: 100%;
+  justify-items: start;
 }
 
 .lift-controls .btn {
   padding: 8px 12px;
   font-size: 13px;
   border-radius: 12px;
-  width: 100%;
+  width: 96px;
 }
 
 .lift-up {
