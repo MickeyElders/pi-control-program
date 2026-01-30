@@ -8,7 +8,8 @@
   </head>
   <body>
     <main class="stage">
-      <section class="panel" aria-live="polite">
+      <div class="panel-wrap">
+        <section class="panel" aria-live="polite">
         {% set routes = ["清水桶 → 浸泡桶", "浸泡桶 → 清水桶", "加热桶 → 浸泡桶", "浸泡桶 → 加热桶"] %}
         <header class="panel-header">
           <div>
@@ -136,7 +137,8 @@
         </div>
 
         <p class="hint" id="hint">就绪。</p>
-      </section>
+        </section>
+      </div>
     </main>
 
     <script>
@@ -170,9 +172,11 @@
 
       function updatePanelScale() {
         const panel = document.querySelector(".panel");
-        if (!panel) return;
+        const wrap = document.querySelector(".panel-wrap");
+        if (!panel || !wrap) return;
         if (!document.body.classList.contains("is-mobile")) {
           panel.style.removeProperty("--scale");
+          wrap.style.removeProperty("height");
           return;
         }
         requestAnimationFrame(() => {
@@ -180,6 +184,8 @@
           if (!width) return;
           const scale = Math.min(1, window.innerWidth / width);
           panel.style.setProperty("--scale", scale.toFixed(3));
+          const height = panel.scrollHeight || panel.offsetHeight;
+          wrap.style.height = `${height * scale}px`;
         });
       }
 
