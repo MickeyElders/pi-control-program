@@ -738,10 +738,14 @@ body.is-mobile .stage {
 }
 
 body.is-mobile .viewport {
+  width: 100%;
+}
+
+body.is-mobile .viewport-wrap {
   --scale: 1;
   transform: scale(var(--scale));
   transform-origin: top center;
-  width: 920px;
+  width: calc(100vw / var(--scale));
 }
 
 .panel-wrap {
