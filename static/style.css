@@ -23,6 +23,15 @@ body {
   min-height: 100vh;
   font-family: "Palatino", "Baskerville", "Times New Roman", serif;
   color: var(--ink);
+  background: var(--bg);
+}
+
+.viewport-wrap {
+  width: 100%;
+}
+
+.viewport {
+  min-height: 100vh;
   background:
     radial-gradient(900px 500px at 8% 8%, #fff3d7 0%, transparent 60%),
     radial-gradient(1000px 600px at 92% 20%, #e2d0b2 0%, transparent 55%),
@@ -725,7 +734,7 @@ body.is-mobile .stage {
   place-items: start center;
 }
 
-body.is-mobile .panel {
+body.is-mobile .viewport {
   --scale: 1;
   transform: scale(var(--scale));
   transform-origin: top left;

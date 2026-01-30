@@ -7,9 +7,11 @@
     <link rel="stylesheet" href="/static/style.css" />
   </head>
   <body>
-    <main class="stage">
-      <div class="panel-wrap">
-        <section class="panel" aria-live="polite">
+    <div class="viewport-wrap">
+      <div class="viewport">
+        <main class="stage">
+          <div class="panel-wrap">
+            <section class="panel" aria-live="polite">
         {% set routes = ["清水桶 → 浸泡桶", "浸泡桶 → 清水桶", "加热桶 → 浸泡桶", "浸泡桶 → 加热桶"] %}
         <header class="panel-header">
           <div>
@@ -137,9 +139,11 @@
         </div>
 
         <p class="hint" id="hint">就绪。</p>
-        </section>
+            </section>
+          </div>
+        </main>
       </div>
-    </main>
+    </div>
 
     <script>
       const cards = Array.from(document.querySelectorAll(".pump-card"));
@@ -171,21 +175,21 @@
       }
 
       function updatePanelScale() {
-        const panel = document.querySelector(".panel");
-        const wrap = document.querySelector(".panel-wrap");
-        if (!panel || !wrap) return;
+        const viewport = document.querySelector(".viewport");
+        const viewportWrap = document.querySelector(".viewport-wrap");
+        if (!viewport || !viewportWrap) return;
         if (!document.body.classList.contains("is-mobile")) {
-          panel.style.removeProperty("--scale");
-          wrap.style.removeProperty("height");
+          viewport.style.removeProperty("--scale");
+          viewportWrap.style.removeProperty("height");
           return;
         }
         requestAnimationFrame(() => {
-          const width = panel.offsetWidth;
+          const width = viewport.offsetWidth;
           if (!width) return;
           const scale = Math.min(1, window.innerWidth / width);
-          panel.style.setProperty("--scale", scale.toFixed(3));
-          const height = panel.scrollHeight || panel.offsetHeight;
-          wrap.style.height = `${height * scale}px`;
+          viewport.style.setProperty("--scale", scale.toFixed(3));
+          const height = viewport.scrollHeight || viewport.offsetHeight;
+          viewportWrap.style.height = `${height * scale}px`;
         });
       }
 
