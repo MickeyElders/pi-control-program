@@ -180,7 +180,7 @@
           return;
         }
         requestAnimationFrame(() => {
-          const width = panel.scrollWidth || panel.offsetWidth;
+          const width = panel.offsetWidth;
           if (!width) return;
           const scale = Math.min(1, window.innerWidth / width);
           panel.style.setProperty("--scale", scale.toFixed(3));

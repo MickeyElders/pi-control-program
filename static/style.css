@@ -729,7 +729,7 @@ body.is-mobile .panel {
   --scale: 1;
   transform: scale(var(--scale));
   transform-origin: top left;
-  width: calc(100% / var(--scale));
+  width: 920px;
 }
 
 .panel-wrap {
