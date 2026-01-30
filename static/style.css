@@ -732,4 +732,9 @@ h2 {
     transform-origin: top left;
     width: calc(100% / var(--scale));
   }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
 }
