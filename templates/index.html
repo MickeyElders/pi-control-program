@@ -179,15 +179,14 @@
         const viewportWrap = document.querySelector(".viewport-wrap");
         if (!viewport || !viewportWrap) return;
         if (!document.body.classList.contains("is-mobile")) {
-          viewport.style.removeProperty("--scale");
+          document.body.style.removeProperty("--scale");
           viewportWrap.style.removeProperty("height");
           return;
         }
         requestAnimationFrame(() => {
-          const width = viewport.offsetWidth;
-          if (!width) return;
-          const scale = Math.min(1, window.innerWidth / width);
-          viewport.style.setProperty("--scale", scale.toFixed(3));
+          const baseWidth = 920;
+          const scale = Math.min(1, window.innerWidth / baseWidth);
+          document.body.style.setProperty("--scale", scale.toFixed(3));
           const height = viewport.scrollHeight || viewport.offsetHeight;
           viewportWrap.style.height = `${height * scale}px`;
         });

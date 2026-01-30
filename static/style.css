@@ -738,7 +738,7 @@ body.is-mobile .viewport {
   --scale: 1;
   transform: scale(var(--scale));
   transform-origin: top left;
-  width: 920px;
+  width: calc(100vw / var(--scale));
 }
 
 .panel-wrap {
