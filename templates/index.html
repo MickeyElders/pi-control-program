@@ -155,6 +155,22 @@
       const liftStop = document.getElementById("lift-stop");
       const debugToggle = document.getElementById("debug-toggle");
 
+      function isMobileDevice() {
+        const ua = navigator.userAgent || "";
+        const uaData = navigator.userAgentData;
+        if (uaData && typeof uaData.mobile === "boolean") {
+          return uaData.mobile;
+        }
+        return /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(ua);
+      }
+
+      function updateViewportClass() {
+        document.body.classList.toggle("is-mobile", isMobileDevice());
+      }
+
+      updateViewportClass();
+      window.addEventListener("resize", updateViewportClass);
+
       function setPipeFlow(index, on) {
         const pipe = pipes.get(String(index));
         if (pipe) {

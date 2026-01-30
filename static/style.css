@@ -717,24 +717,22 @@ h2 {
   }
 }
 
-@media (max-width: 720px) {
-  body {
-    overflow-x: hidden;
-  }
+body.is-mobile {
+  overflow-x: hidden;
+}
 
-  .stage {
-    place-items: start center;
-  }
+body.is-mobile .stage {
+  place-items: start center;
+}
 
-  .panel {
-    --scale: 0.8;
-    transform: scale(var(--scale));
-    transform-origin: top left;
-    width: calc(100% / var(--scale));
-  }
+body.is-mobile .panel {
+  --scale: 0.8;
+  transform: scale(var(--scale));
+  transform-origin: top left;
+  width: calc(100% / var(--scale));
+}
 
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-  }
+body.is-mobile .grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
