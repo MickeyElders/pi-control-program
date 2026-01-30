@@ -610,6 +610,7 @@ h2 {
   cursor: pointer;
   transition: transform 150ms ease, box-shadow 150ms ease;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+  white-space: nowrap;
 }
 
 .btn.toggle {
@@ -717,88 +718,18 @@ h2 {
 }
 
 @media (max-width: 720px) {
-  :root {
-    --tank-height: 260px;
-    --tank-gap: 12px;
-  }
-
   body {
     overflow-x: hidden;
   }
 
+  .stage {
+    place-items: start center;
+  }
+
   .panel {
-    padding: 18px;
-  }
-
-  .panel-header {
-    gap: 12px;
-  }
-
-  h1 {
-    font-size: 24px;
-  }
-
-  .meta {
-    font-size: 12px;
-  }
-
-  .tank-row {
-    grid-template-columns: 0.6fr 1.1fr 0.45fr 0.85fr;
-  }
-
-  .tank.soak .tank-body,
-  .tank.small .tank-body {
-    width: 100%;
-  }
-
-  .lift-panel {
-    height: var(--tank-height);
-  }
-
-  .lift-controls .btn {
-    width: 84px;
-    padding: 8px 10px;
-  }
-
-  .lift-status {
-    width: 84px;
-    font-size: 11px;
-  }
-
-  .grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .pump-card {
-    padding: 14px;
-    min-height: 170px;
-  }
-
-  .pump-label h2 {
-    font-size: 14px;
-  }
-
-  .pump-route {
-    display: none;
-  }
-
-  .pump-meta {
-    display: none;
-  }
-
-  .controls .btn {
-    padding: 8px 10px;
-    font-size: 11px;
-  }
-
-  .tank-percent {
-    font-size: 12px;
-    padding: 4px 8px;
-  }
-
-  .tank-metrics {
-    font-size: 11px;
-    padding: 4px 8px;
+    --scale: 0.8;
+    transform: scale(var(--scale));
+    transform-origin: top left;
+    width: calc(100% / var(--scale));
   }
 }
