@@ -23,6 +23,19 @@ body {
   min-height: 100vh;
   font-family: "Palatino", "Baskerville", "Times New Roman", serif;
   color: var(--ink);
+  background: var(--bg-deep);
+}
+
+.scale-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.scale-root {
+  width: 920px;
+  max-width: 100%;
+  min-height: 100vh;
   background:
     radial-gradient(900px 500px at 8% 8%, #fff3d7 0%, transparent 60%),
     radial-gradient(1000px 600px at 92% 20%, #e2d0b2 0%, transparent 55%),
@@ -719,10 +732,6 @@ h2 {
 
 body.is-mobile {
   overflow-x: hidden;
-  --scale: 1;
-  transform: scale(var(--scale));
-  transform-origin: top center;
-  margin: 0 auto;
 }
 
 .panel-wrap {
@@ -732,4 +741,23 @@ body.is-mobile {
 body.is-mobile .grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+}
+
+body.is-mobile .scale-root {
+  --scale: 1;
+  max-width: none;
+  transform: scale(var(--scale));
+  transform-origin: top center;
+}
+
+body.is-mobile .panel {
+  width: 920px;
+}
+
+body.is-mobile .tank.soak .tank-body {
+  width: 320px;
+}
+
+body.is-mobile .tank.small .tank-body {
+  width: 210px;
 }
