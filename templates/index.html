@@ -7,11 +7,9 @@
     <link rel="stylesheet" href="/static/style.css" />
   </head>
   <body>
-    <div class="viewport-wrap">
-      <div class="viewport">
-        <main class="stage">
-          <div class="panel-wrap">
-            <section class="panel" aria-live="polite">
+    <main class="stage">
+      <div class="panel-wrap">
+        <section class="panel" aria-live="polite">
         {% set routes = ["清水桶 → 浸泡桶", "浸泡桶 → 清水桶", "加热桶 → 浸泡桶", "浸泡桶 → 加热桶"] %}
         <header class="panel-header">
           <div>
@@ -139,11 +137,9 @@
         </div>
 
         <p class="hint" id="hint">就绪。</p>
-            </section>
-          </div>
-        </main>
+        </section>
       </div>
-    </div>
+    </main>
 
     <script>
       const cards = Array.from(document.querySelectorAll(".pump-card"));
@@ -175,20 +171,22 @@
       }
 
       function updatePanelScale() {
-        const viewport = document.querySelector(".viewport");
-        const viewportWrap = document.querySelector(".viewport-wrap");
-        if (!viewport || !viewportWrap) return;
         if (!document.body.classList.contains("is-mobile")) {
-          viewportWrap.style.removeProperty("--scale");
-          viewportWrap.style.removeProperty("height");
+          document.body.style.removeProperty("--scale");
+          document.body.style.removeProperty("width");
+          document.documentElement.style.removeProperty("height");
+          document.body.style.removeProperty("height");
           return;
         }
         requestAnimationFrame(() => {
           const baseWidth = 920;
           const scale = Math.min(1, window.innerWidth / baseWidth);
-          viewportWrap.style.setProperty("--scale", scale.toFixed(3));
-          const height = viewport.scrollHeight || viewport.offsetHeight;
-          viewportWrap.style.height = `${height * scale}px`;
+          document.body.style.setProperty("--scale", "1");
+          document.body.style.width = `${baseWidth}px`;
+          const height = document.body.scrollHeight || document.body.offsetHeight;
+          document.body.style.setProperty("--scale", scale.toFixed(3));
+          document.documentElement.style.height = `${height * scale}px`;
+          document.body.style.height = `${height * scale}px`;
         });
       }
 
