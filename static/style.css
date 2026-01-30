@@ -742,8 +742,9 @@ body.is-mobile .grid {
 
 body.is-mobile .scale-root {
   --scale: 1;
+  --stretch: 1;
   max-width: none;
-  transform: scale(var(--scale));
+  transform: scale(var(--scale)) scaleY(var(--stretch));
   transform-origin: top center;
 }
 

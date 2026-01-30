@@ -185,10 +185,17 @@
         }
         requestAnimationFrame(() => {
           const baseWidth = 920;
-          const scale = Math.min(1, window.innerWidth / baseWidth);
+          const baseHeight = root.scrollHeight || root.offsetHeight;
+          if (!baseHeight) return;
+          const scaleX = Math.min(1, window.innerWidth / baseWidth);
+          const scaleY = Math.min(1, window.innerHeight / baseHeight);
+          const scale = Math.min(scaleX, scaleY);
           root.style.setProperty("--scale", scale.toFixed(3));
-          const height = root.scrollHeight || root.offsetHeight;
-          wrap.style.height = `${height * scale}px`;
+
+          const scaledHeight = baseHeight * scale;
+          const stretch = Math.max(1, window.innerHeight / scaledHeight);
+          root.style.setProperty("--stretch", stretch.toFixed(3));
+          wrap.style.height = `${scaledHeight * stretch}px`;
         });
       }
 
