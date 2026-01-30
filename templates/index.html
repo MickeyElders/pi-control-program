@@ -168,8 +168,27 @@
         document.body.classList.toggle("is-mobile", isMobileDevice());
       }
 
+      function updatePanelScale() {
+        const panel = document.querySelector(".panel");
+        if (!panel) return;
+        if (!document.body.classList.contains("is-mobile")) {
+          panel.style.removeProperty("--scale");
+          return;
+        }
+        requestAnimationFrame(() => {
+          const width = panel.scrollWidth || panel.offsetWidth;
+          if (!width) return;
+          const scale = Math.min(1, window.innerWidth / width);
+          panel.style.setProperty("--scale", scale.toFixed(3));
+        });
+      }
+
       updateViewportClass();
-      window.addEventListener("resize", updateViewportClass);
+      updatePanelScale();
+      window.addEventListener("resize", () => {
+        updateViewportClass();
+        updatePanelScale();
+      });
 
       function setPipeFlow(index, on) {
         const pipe = pipes.get(String(index));

@@ -726,7 +726,7 @@ body.is-mobile .stage {
 }
 
 body.is-mobile .panel {
-  --scale: 0.8;
+  --scale: 1;
   transform: scale(var(--scale));
   transform-origin: top left;
   width: calc(100% / var(--scale));
