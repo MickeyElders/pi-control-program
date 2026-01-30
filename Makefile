@@ -13,7 +13,7 @@ PIN_FACTORY ?= lgpio
 
 SERVICE_USER ?= $(USER)
 RELAY_GPIO ?=
-RELAY_PINS ?= $(if $(strip $(RELAY_GPIO)),$(RELAY_GPIO),27,22,23,10)
+RELAY_PINS ?= $(if $(strip $(RELAY_GPIO)),$(RELAY_GPIO),27,22,23)
 RELAY_ACTIVE_LOW ?= 1
 TANK_LEVELS ?= 72,58,46
 TANK_TEMPS ?= 32.5,22.0,45.0
@@ -29,7 +29,7 @@ help:
 	@echo "make start|stop|restart|status|logs"
 	@echo ""
 	@echo "Overrides:"
-	@echo "  WORKDIR=/path/to/repo SERVICE_USER=pi RELAY_PINS=27,22,23,10 RELAY_ACTIVE_LOW=1 TANK_LEVELS=72,58,46 TANK_TEMPS=32.5,22.0,45.0 TANK_PHS=6.8,7.2,6.5 PIN_FACTORY=lgpio PORT=8000"
+	@echo "  WORKDIR=/path/to/repo SERVICE_USER=pi RELAY_PINS=27,22,23 RELAY_ACTIVE_LOW=1 TANK_LEVELS=72,58,46 TANK_TEMPS=32.5,22.0,45.0 TANK_PHS=6.8,7.2,6.5 PIN_FACTORY=lgpio PORT=8000"
 
 deps:
 	@command -v apt-get >/dev/null 2>&1 || { \

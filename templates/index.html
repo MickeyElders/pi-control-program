@@ -12,7 +12,8 @@
         <main class="stage">
           <div class="panel-wrap">
             <section class="panel" aria-live="polite">
-        {% set routes = ["清水桶 → 浸泡桶", "浸泡桶 → 清水桶", "加热桶 → 浸泡桶", "浸泡桶 → 加热桶"] %}
+        {% set routes = ["清水桶 → 浸泡桶", "加热桶 → 浸泡桶"] %}
+        {% set pump3 = pumps[2] if pumps | length > 2 else None %}
         <header class="panel-header">
           <div>
             <p class="eyebrow">Relay Deck</p>
@@ -105,8 +106,10 @@
 
         <div class="grid" id="grid">
           {% for pump in pumps %}
+          {% if pump.index < 2 %}
           <article
             class="pump-card{% if pump.on %} on{% endif %}"
+            data-kind="pump"
             data-index="{{ pump.index }}"
             data-on="{{ "1" if pump.on else "0" }}"
           >
@@ -118,7 +121,7 @@
                 <div class="water"></div>
               </div>
               <div class="pump-label">
-                <h2>{{ pump.index + 1 }}号开关</h2>
+                <h2>{{ pump.index + 1 }}号水泵</h2>
                 <p class="pump-route">
                   {{ routes[pump.index] if pump.index < routes | length else "未配置" }}
                 </p>
@@ -135,7 +138,53 @@
               <button class="btn toggle" data-role="toggle" type="button">打开</button>
             </div>
           </article>
+          {% endif %}
           {% endfor %}
+
+          <article
+            class="pump-card auto{% if pump3 and pump3.on %} on{% endif %}"
+            data-kind="auto"
+            data-index="2"
+            data-on="{{ "1" if pump3 and pump3.on else "0" }}"
+          >
+            <div class="pump-top">
+              <div class="pump-icon" aria-hidden="true">
+                <div class="pump-shell"></div>
+                <div class="pump-center"></div>
+                <div class="pump-spout"></div>
+                <div class="water"></div>
+              </div>
+              <div class="pump-label">
+                <h2>3号水泵</h2>
+                <p class="pump-route">自动开关控制</p>
+                {% if pump3 %}
+                <p class="pump-meta">GPIO <span class="mono">{{ pump3.pin }}</span></p>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="status">
+              <span class="dot" data-role="dot"></span>
+              <span class="status-text" data-role="status">关闭</span>
+            </div>
+
+            <div class="auto-switches">
+              <div class="auto-row" data-auto="fresh" data-on="{{ "1" if auto_switches.fresh else "0" }}">
+                <div class="auto-text">
+                  <div class="auto-title">开关1</div>
+                  <div class="auto-sub">浸泡桶 → 清水桶</div>
+                </div>
+                <button class="btn toggle auto" data-auto="fresh" type="button">打开</button>
+              </div>
+              <div class="auto-row" data-auto="heat" data-on="{{ "1" if auto_switches.heat else "0" }}">
+                <div class="auto-text">
+                  <div class="auto-title">开关2</div>
+                  <div class="auto-sub">浸泡桶 → 加热桶</div>
+                </div>
+                <button class="btn toggle auto" data-auto="heat" type="button">打开</button>
+              </div>
+            </div>
+          </article>
         </div>
 
         <p class="hint" id="hint">就绪。</p>
@@ -146,7 +195,9 @@
     </div>
 
     <script>
-      const cards = Array.from(document.querySelectorAll(".pump-card"));
+      const pumpCards = Array.from(document.querySelectorAll('.pump-card[data-kind="pump"]'));
+      const autoCard = document.querySelector('.pump-card[data-kind="auto"]');
+      const autoRows = Array.from(document.querySelectorAll(".auto-row"));
       const hint = document.getElementById("hint");
       const pipes = new Map(
         Array.from(document.querySelectorAll(".pipe")).map((pipe) => [
@@ -180,6 +231,7 @@
         if (!root || !wrap) return;
         if (!document.body.classList.contains("is-mobile")) {
           root.style.removeProperty("--scale");
+          root.style.removeProperty("--stretch");
           wrap.style.removeProperty("height");
           return;
         }
@@ -187,13 +239,13 @@
           const baseWidth = 920;
           const baseHeight = root.scrollHeight || root.offsetHeight;
           if (!baseHeight) return;
+          const viewportHeight = window.visualViewport?.height || window.innerHeight;
           const scaleX = Math.min(1, window.innerWidth / baseWidth);
-          const scaleY = Math.min(1, window.innerHeight / baseHeight);
-          const scale = Math.min(scaleX, scaleY);
+          const scale = scaleX;
           root.style.setProperty("--scale", scale.toFixed(3));
 
           const scaledHeight = baseHeight * scale;
-          const stretch = Math.max(1, window.innerHeight / scaledHeight);
+          const stretch = Math.min(1.2, Math.max(1, viewportHeight / scaledHeight));
           root.style.setProperty("--stretch", stretch.toFixed(3));
           wrap.style.height = `${scaledHeight * stretch}px`;
         });
@@ -201,10 +253,20 @@
 
       updateViewportClass();
       updatePanelScale();
+
       window.addEventListener("resize", () => {
         updateViewportClass();
         updatePanelScale();
       });
+
+      window.addEventListener("load", () => {
+        updateViewportClass();
+        updatePanelScale();
+      });
+
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", updatePanelScale);
+      }
 
       function setPipeFlow(index, on) {
         const pipe = pipes.get(String(index));
@@ -213,7 +275,7 @@
         }
       }
 
-      function setCardStatus(card, on) {
+      function setPumpStatus(card, on) {
         const dot = card.querySelector('[data-role="dot"]');
         const label = card.querySelector('[data-role="status"]');
         const toggle = card.querySelector('[data-role="toggle"]');
@@ -225,7 +287,12 @@
         toggle.textContent = on ? "关闭" : "打开";
         toggle.classList.toggle("on", !on);
         toggle.classList.toggle("off", on);
-        setPipeFlow(card.dataset.index, on);
+        const index = Number(card.dataset.index);
+        if (index === 0) {
+          setPipeFlow(0, on);
+        } else if (index === 1) {
+          setPipeFlow(2, on);
+        }
       }
 
       function setLiftState(state) {
@@ -242,24 +309,59 @@
       }
 
       function setCardBusy(card, busy) {
+        if (!card) return;
         card.querySelectorAll("button").forEach((btn) => {
           btn.disabled = busy;
         });
+      }
+
+      function setAutoRow(row, on) {
+        row.dataset.on = on ? "1" : "0";
+        const btn = row.querySelector("button");
+        if (btn) {
+          btn.textContent = on ? "关闭" : "打开";
+          btn.classList.toggle("on", !on);
+          btn.classList.toggle("off", on);
+        }
+        const which = row.dataset.auto;
+        if (which === "fresh") {
+          setPipeFlow(1, on);
+        } else if (which === "heat") {
+          setPipeFlow(3, on);
+        }
+      }
+
+      function setAutoCardStatus(on) {
+        if (!autoCard) return;
+        const dot = autoCard.querySelector('[data-role="dot"]');
+        const label = autoCard.querySelector('[data-role="status"]');
+        label.textContent = on ? "开启" : "关闭";
+        dot.classList.toggle("on", on);
+        dot.classList.toggle("off", !on);
+        autoCard.classList.toggle("on", on);
+        autoCard.dataset.on = on ? "1" : "0";
       }
 
       async function refreshStatus() {
         try {
           const res = await fetch("/api/status");
           const data = await res.json();
-          const relayMap = new Map(
-            (data.relays || []).map((item) => [String(item.index), item])
-          );
-          cards.forEach((card) => {
+          const relayMap = new Map((data.relays || []).map((item) => [String(item.index), item]));
+          pumpCards.forEach((card) => {
             const item = relayMap.get(card.dataset.index);
             if (item) {
-              setCardStatus(card, Boolean(item.on));
+              setPumpStatus(card, Boolean(item.on));
             }
           });
+          if (data.relays && data.relays[2]) {
+            setAutoCardStatus(Boolean(data.relays[2].on));
+          }
+          if (data.auto) {
+            autoRows.forEach((row) => {
+              const which = row.dataset.auto;
+              setAutoRow(row, Boolean(data.auto[which]));
+            });
+          }
           hint.textContent = "Last update: " + new Date().toLocaleTimeString();
         } catch (err) {
           hint.textContent = "Status unavailable.";
@@ -277,7 +379,7 @@
             body: JSON.stringify({ index, on }),
           });
           const data = await res.json();
-          setCardStatus(card, Boolean(data.on));
+          setPumpStatus(card, Boolean(data.on));
           hint.textContent = data.on ? "水泵已开启。" : "水泵已关闭。";
         } catch (err) {
           hint.textContent = "指令失败。";
@@ -286,14 +388,55 @@
         }
       }
 
-      cards.forEach((card) => {
+      async function setAutoSwitch(row, on) {
+        setCardBusy(autoCard, true);
+        hint.textContent = on ? "正在开启..." : "正在关闭...";
+        const which = row.dataset.auto;
+        try {
+          const res = await fetch("/api/auto", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ which, on }),
+          });
+          const data = await res.json();
+          if (data.auto) {
+            autoRows.forEach((r) => {
+              const key = r.dataset.auto;
+              setAutoRow(r, Boolean(data.auto[key]));
+            });
+          }
+          if (typeof data.pump_on === "boolean") {
+            setAutoCardStatus(Boolean(data.pump_on));
+          }
+          hint.textContent = data.pump_on ? "水泵已开启。" : "水泵已关闭。";
+        } catch (err) {
+          hint.textContent = "指令失败。";
+        } finally {
+          setCardBusy(autoCard, false);
+        }
+      }
+
+      pumpCards.forEach((card) => {
         const toggle = card.querySelector('[data-role="toggle"]');
         toggle.addEventListener("click", () => {
           const nextOn = card.dataset.on !== "1";
           setRelay(card, nextOn);
         });
-        setCardStatus(card, card.dataset.on === "1");
+        setPumpStatus(card, card.dataset.on === "1");
       });
+
+      autoRows.forEach((row) => {
+        const btn = row.querySelector("button");
+        btn.addEventListener("click", () => {
+          const nextOn = row.dataset.on !== "1";
+          setAutoSwitch(row, nextOn);
+        });
+        setAutoRow(row, row.dataset.on === "1");
+      });
+
+      if (autoCard) {
+        setAutoCardStatus(autoCard.dataset.on === "1");
+      }
 
       liftUp.addEventListener("click", () => setLiftState("up"));
       liftDown.addEventListener("click", () => setLiftState("down"));

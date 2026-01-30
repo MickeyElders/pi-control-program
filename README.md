@@ -9,7 +9,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 # Configure if needed
-export RELAY_PINS=27,22,23,10
+export RELAY_PINS=27,22,23
 export RELAY_ACTIVE_LOW=1
 export TANK_LEVELS=72,58,46
 export TANK_TEMPS=32.5,22.0,45.0
@@ -21,7 +21,7 @@ uvicorn app:app --host 0.0.0.0 --port 8000
 Open `http://<raspberrypi-ip>:8000`.
 
 ## Config
-- `RELAY_PINS` (default `27,22,23,10`): comma-separated BCM pins.
+- `RELAY_PINS` (default `27,22,23`): comma-separated BCM pins.
 - `RELAY_GPIO`: optional single BCM pin (used only when `RELAY_PINS` is not set).
 - `RELAY_ACTIVE_LOW` (default `1`): set to `1` for low-level trigger, `0` for high-level trigger.
 - `TANK_LEVELS` (default `72,58,46`): soak/fresh/heat water level percentages.
@@ -32,7 +32,7 @@ Open `http://<raspberrypi-ip>:8000`.
 ## Systemd + Make automation
 Install and start the service (will check and install system deps):
 ```bash
-make install SERVICE_USER=pi WORKDIR=/home/pi/pi-control-program RELAY_PINS=27,22,23,10 RELAY_ACTIVE_LOW=1 TANK_LEVELS=72,58,46 TANK_TEMPS=32.5,22.0,45.0 TANK_PHS=6.8,7.2,6.5 PIN_FACTORY=lgpio
+make install SERVICE_USER=pi WORKDIR=/home/pi/pi-control-program RELAY_PINS=27,22,23 RELAY_ACTIVE_LOW=1 TANK_LEVELS=72,58,46 TANK_TEMPS=32.5,22.0,45.0 TANK_PHS=6.8,7.2,6.5 PIN_FACTORY=lgpio
 ```
 
 Reinstall / uninstall:

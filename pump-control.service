@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=pi
 WorkingDirectory=/home/pi/pi-control-program
-Environment=RELAY_PINS=27,22,23,10
+Environment=RELAY_PINS=27,22,23
 Environment=RELAY_ACTIVE_LOW=1
 Environment=TANK_LEVELS=72,58,46
 Environment=TANK_TEMPS=32.5,22.0,45.0

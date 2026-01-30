@@ -34,7 +34,7 @@ except ImportError:
             return None
 
 
-DEFAULT_PINS = "27,22,23,10"
+DEFAULT_PINS = "27,22,23"
 DEFAULT_LEVELS = [72, 58, 46]
 DEFAULT_TEMPS = [32.5, 22.0, 45.0]
 DEFAULT_PHS = [6.8, 7.2, 6.5]
@@ -158,6 +158,8 @@ tank_colors = {
     "heat": color_for_ph_temp(tank_phs["heat"], tank_temps["heat"]),
 }
 
+auto_switches = {"fresh": False, "heat": False}
+
 app = FastAPI(title="Pump Relay Control")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -165,6 +167,11 @@ templates = Jinja2Templates(directory="templates")
 
 class RelayCommand(BaseModel):
     index: int
+    on: bool
+
+
+class AutoSwitchCommand(BaseModel):
+    which: str
     on: bool
 
 
@@ -184,6 +191,7 @@ def index(request: Request) -> HTMLResponse:
             "tank_temps": tank_temps,
             "tank_phs": tank_phs,
             "tank_colors": tank_colors,
+            "auto_switches": auto_switches,
         },
     )
 
@@ -194,7 +202,8 @@ def api_status() -> dict:
         "relays": [
             {"index": idx, "pin": pin, "on": relays[idx].is_active}
             for idx, pin in enumerate(PINS)
-        ]
+        ],
+        "auto": auto_switches,
     }
 
 
@@ -207,6 +216,27 @@ def api_relay(cmd: RelayCommand) -> dict:
     else:
         relays[cmd.index].off()
     return {"on": relays[cmd.index].is_active}
+
+
+@app.post("/api/auto")
+def api_auto(cmd: AutoSwitchCommand) -> dict:
+    if cmd.which not in auto_switches:
+        raise HTTPException(status_code=400, detail="Invalid auto switch.")
+    if cmd.on:
+        # Only one direction at a time
+        for key in auto_switches:
+            auto_switches[key] = key == cmd.which
+    else:
+        auto_switches[cmd.which] = False
+
+    # Pump 3 (index 2) is driven by auto switches
+    if len(relays) > 2:
+        if any(auto_switches.values()):
+            relays[2].on()
+        else:
+            relays[2].off()
+
+    return {"auto": auto_switches, "pump_on": relays[2].is_active if len(relays) > 2 else False}
 
 
 @app.get("/api/ping")
