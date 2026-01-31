@@ -29,6 +29,23 @@
             <div class="meta-row">
               GPIO: <span class="mono">{{ pins | join(", ") }}</span>
             </div>
+            <div class="heater-panel header-heater">
+              <div class="heater-status" id="heater-status">
+                {% if heater.configured %}
+                加热状态：<span data-role="heater-text">{{ "开启" if heater.on else "关闭" }}</span>
+                {% else %}
+                加热状态：未配置
+                {% endif %}
+              </div>
+              <button
+                class="btn heater-toggle"
+                id="heater-toggle"
+                type="button"
+                {% if not heater.configured %}disabled{% endif %}
+              >
+                {{ "停止加热" if heater.on else "开始加热" }}
+              </button>
+            </div>
           </div>
         </header>
         <div class="tank-row">
@@ -100,23 +117,6 @@
                 </div>
               </div>
               <div class="tank-label">加热桶</div>
-            </div>
-            <div class="heater-panel">
-              <div class="heater-status" id="heater-status">
-                {% if heater.configured %}
-                加热状态：<span data-role="heater-text">{{ "开启" if heater.on else "关闭" }}</span>
-                {% else %}
-                加热状态：未配置
-                {% endif %}
-              </div>
-              <button
-                class="btn heater-toggle"
-                id="heater-toggle"
-                type="button"
-                {% if not heater.configured %}disabled{% endif %}
-              >
-                {{ "停止加热" if heater.on else "开始加热" }}
-              </button>
             </div>
           </div>
         </div>
