@@ -64,20 +64,28 @@ deps:
 		dpkg -s $$pkg >/dev/null 2>&1 || missing="$$missing $$pkg"; \
 	done; \
 	gpio_pkg=""; \
-	if dpkg -s python3-lgpio >/dev/null 2>&1; then \
-		gpio_pkg=""; \
-	elif dpkg -s python3-rpi.gpio >/dev/null 2>&1; then \
-		gpio_pkg=""; \
-	else \
-		if [ -f /etc/os-release ]; then \
-			codename=$$(. /etc/os-release && echo $$VERSION_CODENAME); \
+	if [ "$(GPIO_BACKEND)" = "jetson" ] || [ -f /etc/nv_tegra_release ]; then \
+		if dpkg -s python3-jetson-gpio >/dev/null 2>&1; then \
+			gpio_pkg=""; \
 		else \
-			codename=""; \
+			gpio_pkg="python3-jetson-gpio"; \
 		fi; \
-		case "$$codename" in \
-			bookworm|trixie|sid) gpio_pkg="python3-lgpio" ;; \
-			*) gpio_pkg="python3-rpi.gpio" ;; \
-		esac; \
+	else \
+		if dpkg -s python3-lgpio >/dev/null 2>&1; then \
+			gpio_pkg=""; \
+		elif dpkg -s python3-rpi.gpio >/dev/null 2>&1; then \
+			gpio_pkg=""; \
+		else \
+			if [ -f /etc/os-release ]; then \
+				codename=$$(. /etc/os-release && echo $$VERSION_CODENAME); \
+			else \
+				codename=""; \
+			fi; \
+			case "$$codename" in \
+				bookworm|trixie|sid) gpio_pkg="python3-lgpio" ;; \
+				*) gpio_pkg="python3-rpi.gpio" ;; \
+			esac; \
+		fi; \
 	fi; \
 	if [ -n "$$gpio_pkg" ]; then \
 		missing="$$missing $$gpio_pkg"; \
