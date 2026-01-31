@@ -3,216 +3,217 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Water Pump Control</title>
+    <title>PID水循环控制</title>
     <link rel="stylesheet" href="/static/style.css" />
   </head>
   <body>
-    <div class="scale-wrap">
-      <div class="scale-root">
-        <main class="stage">
-          <div class="panel-wrap">
-            <section class="panel" aria-live="polite">
-        {% set routes = ["清水桶 → 浸泡桶", "加热桶 → 浸泡桶"] %}
-        {% set pump3 = pumps[2] if pumps | length > 2 else None %}
-        <header class="panel-header">
-          <div>
-            <p class="eyebrow">Relay Deck</p>
-            <h1>PID水循环控制</h1>
-          </div>
-          <div class="header-actions">
-            <button class="btn debug-toggle" id="debug-toggle" type="button">调试模式</button>
-          </div>
+    <div class="dashboard">
+      {% set routes = ["清水桶 → 浸泡桶", "加热桶 → 浸泡桶"] %}
+      {% set pump3 = pumps[2] if pumps | length > 2 else None %}
+      <header class="topbar">
+        <div class="title-block">
+          <p class="badge">RELAY DECK</p>
+          <h1>PID水循环控制</h1>
+          <p class="subtitle">Industrial Flow Orchestration</p>
+        </div>
+        <div class="top-actions">
           <div class="meta">
-            <div class="meta-row">
-              低电平触发: <span class="mono">{{ "true" if active_low else "false" }}</span>
-            </div>
-            <div class="meta-row">
-              GPIO: <span class="mono">{{ pins | join(", ") }}</span>
-            </div>
+            <div>低电平触发：<span class="mono">{{ "true" if active_low else "false" }}</span></div>
+            <div>GPIO：<span class="mono">{{ pins | join(", ") }}</span></div>
           </div>
-        </header>
-        <div class="tank-row">
-          <div class="lift-panel">
-            <div class="lift-status" id="lift-status">已停止</div>
+          <button class="btn ghost" id="debug-toggle" type="button">调试模式</button>
+        </div>
+      </header>
+
+      <section class="main-grid">
+        <aside class="side-panel">
+          <div class="card lift-card">
+            <div class="card-header">
+              <h2>升降控制</h2>
+              <span class="chip" id="lift-status">已停止</span>
+            </div>
             <div class="lift-controls">
               <button class="btn lift-up" id="lift-up" type="button">升高</button>
               <button class="btn lift-down" id="lift-down" type="button">下降</button>
               <button class="btn lift-stop" id="lift-stop" type="button">停止</button>
             </div>
           </div>
-          <div class="tank soak" style="--level: {{ tank_levels.soak }}; --liquid-base: {{ tank_colors.soak[0] }} {{ tank_colors.soak[1] }} {{ tank_colors.soak[2] }}">
-            <div class="tank-body">
-              <div class="lift-rail" aria-hidden="true">
-                <div class="lift-carriage">
-                  <div class="lift-indicator" id="lift-indicator">
-                    <div class="arrow up"></div>
-                    <div class="arrow down"></div>
+
+          <div class="card heater-card">
+            <div class="card-header">
+              <h2>加热控制</h2>
+              <span class="chip" id="heater-status">
+                {% if heater.configured %}
+                状态：<span data-role="heater-text">{{ "开启" if heater.on else "关闭" }}</span>
+                {% else %}
+                状态：未配置
+                {% endif %}
+              </span>
+            </div>
+            <button
+              class="btn heater-toggle"
+              id="heater-toggle"
+              type="button"
+              {% if not heater.configured %}disabled{% endif %}
+            >
+              {{ "停止加热" if heater.on else "开始加热" }}
+            </button>
+          </div>
+        </aside>
+
+        <section class="card process-panel">
+          <div class="card-header">
+            <h2>工艺流向</h2>
+            <span class="chip">实时监控</span>
+          </div>
+          <div class="tank-zone">
+            <div class="tank-block soak" style="--level: {{ tank_levels.soak }}; --liquid-base: {{ tank_colors.soak[0] }} {{ tank_colors.soak[1] }} {{ tank_colors.soak[2] }}">
+              <div class="tank-shell">
+                <div class="lift-rail" aria-hidden="true">
+                  <div class="lift-carriage">
+                    <div class="lift-indicator" id="lift-indicator">
+                      <div class="arrow up"></div>
+                      <div class="arrow down"></div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="tank-percent">{{ tank_levels.soak }}%</div>
-              <div class="tank-metrics">
-                <span>温度 {{ "%.1f"|format(tank_temps.soak) }}°C</span>
-                <span>pH {{ "%.2f"|format(tank_phs.soak) }}</span>
-              </div>
-              <div class="tank-liquid">
-                <div class="surface"></div>
-                <div class="surface two"></div>
-              </div>
-            </div>
-            <div class="tank-label">浸泡桶</div>
-          </div>
-          <div class="pipe-column" aria-hidden="true">
-            <div class="pipe-group fresh">
-              <div class="pipe to-left" data-pipe="0"><div class="pipe-flow"></div></div>
-              <div class="pipe to-right" data-pipe="1"><div class="pipe-flow"></div></div>
-            </div>
-            <div class="pipe-group heat">
-              <div class="pipe to-left" data-pipe="2"><div class="pipe-flow"></div></div>
-              <div class="pipe to-right" data-pipe="3"><div class="pipe-flow"></div></div>
-            </div>
-          </div>
-          <div class="tank-stack">
-            <div class="tank small fresh" style="--level: {{ tank_levels.fresh }}; --liquid-base: {{ tank_colors.fresh[0] }} {{ tank_colors.fresh[1] }} {{ tank_colors.fresh[2] }}">
-              <div class="tank-body">
-                <div class="tank-percent">{{ tank_levels.fresh }}%</div>
+                <div class="tank-percent">{{ tank_levels.soak }}%</div>
                 <div class="tank-metrics">
-                  <span>温度 {{ "%.1f"|format(tank_temps.fresh) }}°C</span>
-                  <span>pH {{ "%.2f"|format(tank_phs.fresh) }}</span>
+                  <span>温度 {{ "%.1f"|format(tank_temps.soak) }}°C</span>
+                  <span>pH {{ "%.2f"|format(tank_phs.soak) }}</span>
                 </div>
                 <div class="tank-liquid">
                   <div class="surface"></div>
                   <div class="surface two"></div>
                 </div>
               </div>
-              <div class="tank-label">清水桶</div>
+              <div class="tank-label">浸泡桶</div>
             </div>
-            <div class="tank small heat" style="--level: {{ tank_levels.heat }}; --liquid-base: {{ tank_colors.heat[0] }} {{ tank_colors.heat[1] }} {{ tank_colors.heat[2] }}">
-              <div class="tank-body">
-                <div class="tank-percent">{{ tank_levels.heat }}%</div>
-                <div class="tank-metrics">
-                  <span>温度 {{ "%.1f"|format(tank_temps.heat) }}°C</span>
-                  <span>pH {{ "%.2f"|format(tank_phs.heat) }}</span>
-                </div>
-                <div class="tank-liquid">
-                  <div class="surface"></div>
-                  <div class="surface two"></div>
-                </div>
+
+            <div class="pipe-stack" aria-hidden="true">
+              <div class="pipe-group fresh">
+                <div class="pipe to-right" data-pipe="0"><div class="pipe-flow"></div></div>
+                <div class="pipe to-left" data-pipe="1"><div class="pipe-flow"></div></div>
               </div>
-              <div class="tank-label">加热桶</div>
+              <div class="pipe-group heat">
+                <div class="pipe to-right" data-pipe="2"><div class="pipe-flow"></div></div>
+                <div class="pipe to-left" data-pipe="3"><div class="pipe-flow"></div></div>
+              </div>
             </div>
-            <div class="heater-panel">
-              <div class="heater-status" id="heater-status">
-                {% if heater.configured %}
-                加热状态：<span data-role="heater-text">{{ "开启" if heater.on else "关闭" }}</span>
-                {% else %}
-                加热状态：未配置
-                {% endif %}
+
+            <div class="tank-column">
+              <div class="tank-block small fresh" style="--level: {{ tank_levels.fresh }}; --liquid-base: {{ tank_colors.fresh[0] }} {{ tank_colors.fresh[1] }} {{ tank_colors.fresh[2] }}">
+                <div class="tank-shell">
+                  <div class="tank-percent">{{ tank_levels.fresh }}%</div>
+                  <div class="tank-metrics">
+                    <span>温度 {{ "%.1f"|format(tank_temps.fresh) }}°C</span>
+                    <span>pH {{ "%.2f"|format(tank_phs.fresh) }}</span>
+                  </div>
+                  <div class="tank-liquid">
+                    <div class="surface"></div>
+                    <div class="surface two"></div>
+                  </div>
+                </div>
+                <div class="tank-label">清水桶</div>
               </div>
-              <button
-                class="btn heater-toggle"
-                id="heater-toggle"
-                type="button"
-                {% if not heater.configured %}disabled{% endif %}
-              >
-                {{ "停止加热" if heater.on else "开始加热" }}
-              </button>
+              <div class="tank-block small heat" style="--level: {{ tank_levels.heat }}; --liquid-base: {{ tank_colors.heat[0] }} {{ tank_colors.heat[1] }} {{ tank_colors.heat[2] }}">
+                <div class="tank-shell">
+                  <div class="tank-percent">{{ tank_levels.heat }}%</div>
+                  <div class="tank-metrics">
+                    <span>温度 {{ "%.1f"|format(tank_temps.heat) }}°C</span>
+                    <span>pH {{ "%.2f"|format(tank_phs.heat) }}</span>
+                  </div>
+                  <div class="tank-liquid">
+                    <div class="surface"></div>
+                    <div class="surface two"></div>
+                  </div>
+                </div>
+                <div class="tank-label">加热桶</div>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
+      </section>
 
-        <div class="grid" id="grid">
-          {% for pump in pumps %}
-          {% if pump.index < 2 %}
-          <article
-            class="pump-card{% if pump.on %} on{% endif %}"
-            data-kind="pump"
-            data-index="{{ pump.index }}"
-            data-on="{{ "1" if pump.on else "0" }}"
-          >
-            <div class="pump-top">
-              <div class="pump-icon" aria-hidden="true">
-                <div class="pump-shell"></div>
-                <div class="pump-center"></div>
-                <div class="pump-spout"></div>
-                <div class="water"></div>
-              </div>
-              <div class="pump-label">
-                <h2>{{ pump.index + 1 }}号水泵</h2>
-                <p class="pump-route">
-                  {{ routes[pump.index] if pump.index < routes | length else "未配置" }}
-                </p>
-                <p class="pump-meta">GPIO <span class="mono">{{ pump.pin }}</span></p>
-              </div>
+      <section class="control-grid" id="grid">
+        {% for pump in pumps %}
+        {% if pump.index < 2 %}
+        <article
+          class="pump-card{% if pump.on %} on{% endif %}"
+          data-kind="pump"
+          data-index="{{ pump.index }}"
+          data-on="{{ "1" if pump.on else "0" }}"
+        >
+          <div class="pump-head">
+            <div class="pump-icon" aria-hidden="true">
+              <div class="pump-shell"></div>
+              <div class="pump-center"></div>
+              <div class="pump-spout"></div>
+              <div class="water"></div>
             </div>
-
-            <div class="status">
-              <span class="dot" data-role="dot"></span>
-              <span class="status-text" data-role="status">关闭</span>
+            <div class="pump-info">
+              <h3>{{ pump.index + 1 }}号水泵</h3>
+              <p>{{ routes[pump.index] if pump.index < routes | length else "未配置" }}</p>
+              <span class="mono">GPIO {{ pump.pin }}</span>
             </div>
-
-            <div class="controls">
-              <button class="btn toggle" data-role="toggle" type="button">打开</button>
-            </div>
-          </article>
-          {% endif %}
-          {% endfor %}
-
-          <article
-            class="pump-card{% if pump3 and pump3.on %} on{% endif %}"
-            data-kind="pump"
-            data-index="2"
-            data-on="{{ "1" if pump3 and pump3.on else "0" }}"
-          >
-            <div class="pump-top">
-              <div class="pump-icon" aria-hidden="true">
-                <div class="pump-shell"></div>
-                <div class="pump-center"></div>
-                <div class="pump-spout"></div>
-                <div class="water"></div>
-              </div>
-              <div class="pump-label">
-                <h2>3号水泵</h2>
-                <p class="pump-route">浸泡桶 → 自动阀</p>
-                {% if pump3 %}
-                <p class="pump-meta">GPIO <span class="mono">{{ pump3.pin }}</span></p>
-                {% endif %}
-              </div>
-            </div>
-
-            <div class="status">
-              <span class="dot" data-role="dot"></span>
-              <span class="status-text" data-role="status">关闭</span>
-            </div>
-
-            <div class="controls">
-              <button class="btn toggle" data-role="toggle" type="button">打开</button>
-            </div>
-
-            <div class="auto-switches">
-              <div class="auto-row" data-auto="fresh" data-on="{{ "1" if auto_switches.fresh else "0" }}">
-                <div class="auto-text">
-                  <div class="auto-title">开关1</div>
-                  <div class="auto-sub">浸泡桶 → 清水桶</div>
-                </div>
-                <button class="btn toggle auto" data-auto="fresh" type="button">打开</button>
-              </div>
-              <div class="auto-row" data-auto="heat" data-on="{{ "1" if auto_switches.heat else "0" }}">
-                <div class="auto-text">
-                  <div class="auto-title">开关2</div>
-                  <div class="auto-sub">浸泡桶 → 加热桶</div>
-                </div>
-                <button class="btn toggle auto" data-auto="heat" type="button">打开</button>
-              </div>
-            </div>
-          </article>
-        </div>
-
-        <p class="hint" id="hint">就绪。</p>
-            </section>
           </div>
-        </main>
-      </div>
+          <div class="status">
+            <span class="dot" data-role="dot"></span>
+            <span class="status-text" data-role="status">关闭</span>
+          </div>
+          <button class="btn toggle" data-role="toggle" type="button">打开</button>
+        </article>
+        {% endif %}
+        {% endfor %}
+
+        <article
+          class="pump-card{% if pump3 and pump3.on %} on{% endif %}"
+          data-kind="pump"
+          data-index="2"
+          data-on="{{ "1" if pump3 and pump3.on else "0" }}"
+        >
+          <div class="pump-head">
+            <div class="pump-icon" aria-hidden="true">
+              <div class="pump-shell"></div>
+              <div class="pump-center"></div>
+              <div class="pump-spout"></div>
+              <div class="water"></div>
+            </div>
+            <div class="pump-info">
+              <h3>3号水泵</h3>
+              <p>浸泡桶 → 自动阀</p>
+              {% if pump3 %}
+              <span class="mono">GPIO {{ pump3.pin }}</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="status">
+            <span class="dot" data-role="dot"></span>
+            <span class="status-text" data-role="status">关闭</span>
+          </div>
+          <button class="btn toggle" data-role="toggle" type="button">打开</button>
+          <div class="auto-switches">
+            <div class="auto-row" data-auto="fresh" data-on="{{ "1" if auto_switches.fresh else "0" }}">
+              <div class="auto-text">
+                <strong>开关1</strong>
+                <span>浸泡桶 → 清水桶</span>
+              </div>
+              <button class="btn toggle auto" data-auto="fresh" type="button">打开</button>
+            </div>
+            <div class="auto-row" data-auto="heat" data-on="{{ "1" if auto_switches.heat else "0" }}">
+              <div class="auto-text">
+                <strong>开关2</strong>
+                <span>浸泡桶 → 加热桶</span>
+              </div>
+              <button class="btn toggle auto" data-auto="heat" type="button">打开</button>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <footer class="status-bar">
+        <span id="hint">就绪。</span>
+      </footer>
     </div>
 
     <script>
@@ -234,62 +235,6 @@
       const debugToggle = document.getElementById("debug-toggle");
       const heaterToggle = document.getElementById("heater-toggle");
       const heaterText = document.querySelector('[data-role="heater-text"]');
-
-      function isMobileDevice() {
-        const ua = navigator.userAgent || "";
-        const uaData = navigator.userAgentData;
-        if (uaData && typeof uaData.mobile === "boolean") {
-          return uaData.mobile;
-        }
-        return /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(ua);
-      }
-
-      function updateViewportClass() {
-        document.body.classList.toggle("is-mobile", isMobileDevice());
-      }
-
-      function updatePanelScale() {
-        const root = document.querySelector(".scale-root");
-        const wrap = document.querySelector(".scale-wrap");
-        if (!root || !wrap) return;
-        if (!document.body.classList.contains("is-mobile")) {
-          root.style.removeProperty("--scale");
-          root.style.removeProperty("--stretch");
-          wrap.style.removeProperty("height");
-          return;
-        }
-        requestAnimationFrame(() => {
-          const baseWidth = 920;
-          const baseHeight = root.scrollHeight || root.offsetHeight;
-          if (!baseHeight) return;
-          const viewportHeight = window.visualViewport?.height || window.innerHeight;
-          const scaleX = Math.min(1, window.innerWidth / baseWidth);
-          const scale = scaleX;
-          root.style.setProperty("--scale", scale.toFixed(3));
-
-          const scaledHeight = baseHeight * scale;
-          const stretch = Math.min(1.2, Math.max(1, viewportHeight / scaledHeight));
-          root.style.setProperty("--stretch", stretch.toFixed(3));
-          wrap.style.height = `${scaledHeight * stretch}px`;
-        });
-      }
-
-      updateViewportClass();
-      updatePanelScale();
-
-      window.addEventListener("resize", () => {
-        updateViewportClass();
-        updatePanelScale();
-      });
-
-      window.addEventListener("load", () => {
-        updateViewportClass();
-        updatePanelScale();
-      });
-
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener("resize", updatePanelScale);
-      }
 
       function setPipeFlow(index, on) {
         const pipe = pipes.get(String(index));
@@ -338,18 +283,6 @@
         });
       }
 
-      function updateValveFlows(pumpOn) {
-        autoRows.forEach((row) => {
-          const which = row.dataset.auto;
-          const active = row.dataset.on === "1" && pumpOn;
-          if (which === "fresh") {
-            setPipeFlow(1, active);
-          } else if (which === "heat") {
-            setPipeFlow(3, active);
-          }
-        });
-      }
-
       function setAutoRow(row, on) {
         row.dataset.on = on ? "1" : "0";
         const btn = row.querySelector("button");
@@ -360,21 +293,16 @@
         }
       }
 
-      function setPumpCardStatus(card, on) {
-        if (!card) return;
-        const dot = card.querySelector('[data-role="dot"]');
-        const label = card.querySelector('[data-role="status"]');
-        label.textContent = on ? "开启" : "关闭";
-        dot.classList.toggle("on", on);
-        dot.classList.toggle("off", !on);
-        card.classList.toggle("on", on);
-        card.dataset.on = on ? "1" : "0";
-        const toggle = card.querySelector('[data-role="toggle"]');
-        if (toggle) {
-          toggle.textContent = on ? "关闭" : "打开";
-          toggle.classList.toggle("on", !on);
-          toggle.classList.toggle("off", on);
-        }
+      function updateValveFlows(pumpOn) {
+        autoRows.forEach((row) => {
+          const which = row.dataset.auto;
+          const active = row.dataset.on === "1" && pumpOn;
+          if (which === "fresh") {
+            setPipeFlow(1, active);
+          } else if (which === "heat") {
+            setPipeFlow(3, active);
+          }
+        });
       }
 
       async function refreshStatus() {
@@ -389,7 +317,7 @@
             }
           });
           if (data.relays && data.relays[2]) {
-            setPumpCardStatus(pump3Card, Boolean(data.relays[2].on));
+            setPumpStatus(pump3Card, Boolean(data.relays[2].on));
           }
           if (data.auto) {
             autoRows.forEach((row) => {
@@ -480,7 +408,7 @@
       });
 
       if (pump3Card) {
-        setPumpCardStatus(pump3Card, pump3Card.dataset.on === "1");
+        setPumpStatus(pump3Card, pump3Card.dataset.on === "1");
       }
       updateValveFlows(pump3Card?.dataset.on === "1");
 
