@@ -628,6 +628,25 @@ h2 {
   margin-top: auto;
 }
 
+.pump-actions {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.pump-actions-split {
+  justify-content: space-between;
+}
+
+.pump-actions-split .controls {
+  flex: 0 0 45%;
+  margin-top: 0;
+}
+
+.pump-actions-split .auto-switches {
+  flex: 1 1 55%;
+}
+
 .btn {
   border: none;
   padding: 12px 18px;
@@ -649,6 +668,10 @@ h2 {
 .auto-switches {
   display: grid;
   gap: 10px;
+}
+
+.auto-switches.compact {
+  gap: 8px;
 }
 
 .heater-panel {
@@ -693,6 +716,10 @@ h2 {
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.75);
   border: 1px solid rgba(27, 26, 23, 0.12);
+}
+
+.auto-switches.compact .auto-row {
+  padding: 8px 10px;
 }
 
 .auto-text {
