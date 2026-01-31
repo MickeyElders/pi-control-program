@@ -164,32 +164,23 @@
             data-index="2"
             data-on="{{ "1" if pump3 and pump3.on else "0" }}"
           >
-            <div class="pump-top">
-              <div class="pump-icon" aria-hidden="true">
-                <div class="pump-shell"></div>
-                <div class="pump-center"></div>
-                <div class="pump-spout"></div>
-                <div class="water"></div>
+            <div class="pump-top pump-top-split">
+              <div class="pump-info-block">
+                <div class="pump-icon" aria-hidden="true">
+                  <div class="pump-shell"></div>
+                  <div class="pump-center"></div>
+                  <div class="pump-spout"></div>
+                  <div class="water"></div>
+                </div>
+                <div class="pump-label">
+                  <h2>3号水泵</h2>
+                  <p class="pump-route">浸泡桶 → 自动阀</p>
+                  {% if pump3 %}
+                  <p class="pump-meta">GPIO <span class="mono">{{ pump3.pin }}</span></p>
+                  {% endif %}
+                </div>
               </div>
-              <div class="pump-label">
-                <h2>3号水泵</h2>
-                <p class="pump-route">浸泡桶 → 自动阀</p>
-                {% if pump3 %}
-                <p class="pump-meta">GPIO <span class="mono">{{ pump3.pin }}</span></p>
-                {% endif %}
-              </div>
-            </div>
-
-            <div class="status">
-              <span class="dot" data-role="dot"></span>
-              <span class="status-text" data-role="status">关闭</span>
-            </div>
-
-            <div class="pump-actions pump-actions-split">
-              <div class="controls">
-                <button class="btn toggle" data-role="toggle" type="button">打开</button>
-              </div>
-              <div class="auto-switches compact">
+              <div class="auto-switches compact inline">
                 <div class="auto-row" data-auto="fresh" data-on="{{ "1" if auto_switches.fresh else "0" }}">
                   <div class="auto-text">
                     <div class="auto-title">开关1</div>
@@ -205,6 +196,15 @@
                   <button class="btn toggle auto" data-auto="heat" type="button">打开</button>
                 </div>
               </div>
+            </div>
+
+            <div class="status">
+              <span class="dot" data-role="dot"></span>
+              <span class="status-text" data-role="status">关闭</span>
+            </div>
+
+            <div class="controls">
+              <button class="btn toggle" data-role="toggle" type="button">打开</button>
             </div>
           </article>
         </div>
