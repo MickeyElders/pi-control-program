@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
@@ -8,30 +8,123 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 try:
-    from gpiozero import DigitalOutputDevice
+    import Jetson.GPIO as JetsonGPIO
 except ImportError:
-    class DigitalOutputDevice:  # Minimal stub for non-Pi dev/testing.
-        def __init__(self, pin: int, active_high: bool = True, initial_value: bool = False) -> None:
-            self._is_active = bool(initial_value)
-            self.pin = pin
-            self.active_high = active_high
+    JetsonGPIO = None
 
-        def on(self) -> None:
-            self._is_active = True
+try:
+    from gpiozero import DigitalOutputDevice as GpiozeroDigitalOutputDevice
+except ImportError:
+    GpiozeroDigitalOutputDevice = None
 
-        def off(self) -> None:
-            self._is_active = False
+GPIO_BACKEND = os.getenv("GPIO_BACKEND", "auto").lower()
+PIN_MODE = os.getenv("PIN_MODE", "BOARD").upper()
 
-        @property
-        def is_active(self) -> bool:
-            return self._is_active
+if GPIO_BACKEND in {"jetson", "jetson-gpio"}:
+    if not JetsonGPIO:
+        raise RuntimeError("GPIO_BACKEND=jetson requires Jetson.GPIO to be installed.")
+    BACKEND = "jetson"
+elif GPIO_BACKEND in {"gpiozero", "rpi"}:
+    if not GpiozeroDigitalOutputDevice:
+        raise RuntimeError("GPIO_BACKEND=gpiozero requires gpiozero to be installed.")
+    BACKEND = "gpiozero"
+else:
+    if JetsonGPIO:
+        BACKEND = "jetson"
+    elif GpiozeroDigitalOutputDevice:
+        BACKEND = "gpiozero"
+    else:
+        BACKEND = "stub"
 
-        @property
-        def value(self) -> int:
-            return 1 if self._is_active else 0
 
-        def close(self) -> None:
-            return None
+class JetsonOutputDevice:
+    def __init__(self, pin: int, active_low: bool = False, initial_value: bool = False) -> None:
+        self.pin = pin
+        self.active_low = active_low
+        self._is_active = bool(initial_value)
+        if PIN_MODE == "BCM":
+            JetsonGPIO.setmode(JetsonGPIO.BCM)
+        else:
+            JetsonGPIO.setmode(JetsonGPIO.BOARD)
+        JetsonGPIO.setwarnings(False)
+        level = JetsonGPIO.HIGH if (initial_value ^ active_low) else JetsonGPIO.LOW
+        JetsonGPIO.setup(pin, JetsonGPIO.OUT, initial=level)
+
+    def on(self) -> None:
+        JetsonGPIO.output(self.pin, JetsonGPIO.LOW if self.active_low else JetsonGPIO.HIGH)
+        self._is_active = True
+
+    def off(self) -> None:
+        JetsonGPIO.output(self.pin, JetsonGPIO.HIGH if self.active_low else JetsonGPIO.LOW)
+        self._is_active = False
+
+    @property
+    def is_active(self) -> bool:
+        return self._is_active
+
+    @property
+    def value(self) -> int:
+        return 1 if self._is_active else 0
+
+    def close(self) -> None:
+        JetsonGPIO.cleanup(self.pin)
+
+
+class GpiozeroOutputDevice:
+    def __init__(self, pin: int, active_low: bool = False, initial_value: bool = False) -> None:
+        self.device = GpiozeroDigitalOutputDevice(
+            pin, active_high=not active_low, initial_value=initial_value
+        )
+        self.pin = pin
+
+    def on(self) -> None:
+        self.device.on()
+
+    def off(self) -> None:
+        self.device.off()
+
+    @property
+    def is_active(self) -> bool:
+        return self.device.is_active
+
+    @property
+    def value(self) -> int:
+        return self.device.value
+
+    def close(self) -> None:
+        self.device.close()
+
+
+class StubOutputDevice:
+    def __init__(self, pin: int, active_low: bool = False, initial_value: bool = False) -> None:
+        self.pin = pin
+        self.active_low = active_low
+        self._is_active = bool(initial_value)
+
+    def on(self) -> None:
+        self._is_active = True
+
+    def off(self) -> None:
+        self._is_active = False
+
+    @property
+    def is_active(self) -> bool:
+        return self._is_active
+
+    @property
+    def value(self) -> int:
+        return 1 if self._is_active else 0
+
+    def close(self) -> None:
+        return None
+
+
+def create_output_device(pin: int, active_low: bool, initial_value: bool = False):
+    if BACKEND == "jetson":
+        return JetsonOutputDevice(pin, active_low=active_low, initial_value=initial_value)
+    if BACKEND == "gpiozero":
+        return GpiozeroOutputDevice(pin, active_low=active_low, initial_value=initial_value)
+    return StubOutputDevice(pin, active_low=active_low, initial_value=initial_value)
 
 
 DEFAULT_PINS = "27,22,23"
@@ -43,6 +136,20 @@ HEATER_GPIO = os.getenv("HEATER_GPIO")
 HEATER_ACTIVE_LOW = os.getenv("HEATER_ACTIVE_LOW")
 HEATER_ACTIVE_LOW = (
     HEATER_ACTIVE_LOW.lower() in {"1", "true", "yes", "on"} if HEATER_ACTIVE_LOW else ACTIVE_LOW
+)
+VALVE_PINS = os.getenv("VALVE_PINS")
+VALVE_GPIO_FRESH = os.getenv("VALVE_GPIO_FRESH")
+VALVE_GPIO_HEAT = os.getenv("VALVE_GPIO_HEAT")
+VALVE_ACTIVE_LOW = os.getenv("VALVE_ACTIVE_LOW")
+VALVE_ACTIVE_LOW = (
+    VALVE_ACTIVE_LOW.lower() in {"1", "true", "yes", "on"} if VALVE_ACTIVE_LOW else ACTIVE_LOW
+)
+LIFT_PINS = os.getenv("LIFT_PINS")
+LIFT_UP_GPIO = os.getenv("LIFT_UP_GPIO")
+LIFT_DOWN_GPIO = os.getenv("LIFT_DOWN_GPIO")
+LIFT_ACTIVE_LOW = os.getenv("LIFT_ACTIVE_LOW")
+LIFT_ACTIVE_LOW = (
+    LIFT_ACTIVE_LOW.lower() in {"1", "true", "yes", "on"} if LIFT_ACTIVE_LOW else ACTIVE_LOW
 )
 
 
@@ -142,14 +249,45 @@ else:
 if not PINS:
     raise RuntimeError("No relay pins configured. Set RELAY_PINS or RELAY_GPIO.")
 
-relays = [DigitalOutputDevice(pin, active_high=not ACTIVE_LOW, initial_value=False) for pin in PINS]
+relays = [create_output_device(pin, active_low=ACTIVE_LOW, initial_value=False) for pin in PINS]
 for relay in relays:
     relay.off()
+
+valve_pins: List[int] = []
+if VALVE_PINS:
+    valve_pins = parse_pins(VALVE_PINS)
+elif VALVE_GPIO_FRESH and VALVE_GPIO_HEAT:
+    valve_pins = [int(VALVE_GPIO_FRESH), int(VALVE_GPIO_HEAT)]
+
+valves: Optional[Dict[str, object]] = None
+if len(valve_pins) >= 2:
+    valves = {
+        "fresh": create_output_device(valve_pins[0], active_low=VALVE_ACTIVE_LOW, initial_value=False),
+        "heat": create_output_device(valve_pins[1], active_low=VALVE_ACTIVE_LOW, initial_value=False),
+    }
+    for valve in valves.values():
+        valve.off()
+
+lift_pins: List[int] = []
+if LIFT_PINS:
+    lift_pins = parse_pins(LIFT_PINS)
+elif LIFT_UP_GPIO and LIFT_DOWN_GPIO:
+    lift_pins = [int(LIFT_UP_GPIO), int(LIFT_DOWN_GPIO)]
+
+lift_devices: Optional[Dict[str, object]] = None
+lift_state = "stop"
+if len(lift_pins) >= 2:
+    lift_devices = {
+        "up": create_output_device(lift_pins[0], active_low=LIFT_ACTIVE_LOW, initial_value=False),
+        "down": create_output_device(lift_pins[1], active_low=LIFT_ACTIVE_LOW, initial_value=False),
+    }
+    for dev in lift_devices.values():
+        dev.off()
 
 heater = None
 if HEATER_GPIO:
     heater_pin = int(HEATER_GPIO)
-    heater = DigitalOutputDevice(heater_pin, active_high=not HEATER_ACTIVE_LOW, initial_value=False)
+    heater = create_output_device(heater_pin, active_low=HEATER_ACTIVE_LOW, initial_value=False)
     heater.off()
 
 levels_env = os.getenv("TANK_LEVELS", "")
@@ -171,6 +309,24 @@ tank_colors = {
 
 auto_switches = {"fresh": False, "heat": False}
 
+
+def set_lift_state(state: str) -> None:
+    global lift_state
+    if state not in {"up", "down", "stop"}:
+        raise ValueError("Invalid lift state.")
+    lift_state = state
+    if not lift_devices:
+        return
+    if state == "up":
+        lift_devices["up"].on()
+        lift_devices["down"].off()
+    elif state == "down":
+        lift_devices["down"].on()
+        lift_devices["up"].off()
+    else:
+        lift_devices["up"].off()
+        lift_devices["down"].off()
+
 app = FastAPI(title="Pump Relay Control")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -188,6 +344,10 @@ class AutoSwitchCommand(BaseModel):
 
 class HeaterCommand(BaseModel):
     on: bool
+
+
+class LiftCommand(BaseModel):
+    state: str
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -214,12 +374,14 @@ def index(request: Request) -> HTMLResponse:
 
 @app.get("/api/status")
 def api_status() -> dict:
+    auto_status = {"fresh": auto_switches["fresh"], "heat": auto_switches["heat"], "configured": valves is not None}
     return {
         "relays": [
             {"index": idx, "pin": pin, "on": relays[idx].is_active}
             for idx, pin in enumerate(PINS)
         ],
-        "auto": auto_switches,
+        "auto": auto_status,
+        "lift": {"configured": lift_devices is not None, "state": lift_state},
         "heater": {"configured": heater is not None, "on": heater.is_active if heater else False},
     }
 
@@ -237,16 +399,36 @@ def api_relay(cmd: RelayCommand) -> dict:
 
 @app.post("/api/auto")
 def api_auto(cmd: AutoSwitchCommand) -> dict:
+    if valves is None:
+        raise HTTPException(status_code=400, detail="Valves not configured.")
     if cmd.which not in auto_switches:
         raise HTTPException(status_code=400, detail="Invalid auto switch.")
     if cmd.on:
         # Only one direction at a time
         for key in auto_switches:
             auto_switches[key] = key == cmd.which
+            if valves:
+                if auto_switches[key]:
+                    valves[key].on()
+                else:
+                    valves[key].off()
     else:
         auto_switches[cmd.which] = False
+        if valves:
+            valves[cmd.which].off()
 
-    return {"auto": auto_switches}
+    return {"auto": {"fresh": auto_switches["fresh"], "heat": auto_switches["heat"], "configured": valves is not None}}
+
+
+@app.post("/api/lift")
+def api_lift(cmd: LiftCommand) -> dict:
+    if lift_devices is None:
+        raise HTTPException(status_code=400, detail="Lift not configured.")
+    try:
+        set_lift_state(cmd.state)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"configured": True, "state": lift_state}
 
 
 @app.post("/api/heater")

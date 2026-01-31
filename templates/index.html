@@ -331,6 +331,12 @@
         }
       }
 
+      function setLiftButtonsDisabled(disabled) {
+        [liftUp, liftDown, liftStop].forEach((btn) => {
+          if (btn) btn.disabled = disabled;
+        });
+      }
+
       function setCardBusy(card, busy) {
         if (!card) return;
         card.querySelectorAll("button").forEach((btn) => {
@@ -392,9 +398,12 @@
             setPumpCardStatus(pump3Card, Boolean(data.relays[2].on));
           }
           if (data.auto) {
+            const autoConfigured = data.auto.configured !== false;
             autoRows.forEach((row) => {
               const which = row.dataset.auto;
               setAutoRow(row, Boolean(data.auto[which]));
+              const btn = row.querySelector("button");
+              if (btn) btn.disabled = !autoConfigured;
             });
           }
           if (data.heater && heaterToggle && heaterText) {
@@ -406,6 +415,13 @@
               heaterToggle.textContent = on ? "停止加热" : "开始加热";
               heaterToggle.classList.toggle("on", !on);
               heaterToggle.classList.toggle("off", on);
+            }
+          }
+          if (data.lift) {
+            const configured = data.lift.configured !== false;
+            setLiftButtonsDisabled(!configured);
+            if (data.lift.state) {
+              setLiftState(data.lift.state);
             }
           }
           updateValveFlows(pump3Card?.dataset.on === "1");
@@ -461,6 +477,29 @@
         }
       }
 
+      async function setLift(state) {
+        setLiftButtonsDisabled(true);
+        hint.textContent = "正在执行升降...";
+        try {
+          const res = await fetch("/api/lift", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ state }),
+          });
+          const data = await res.json();
+          if (data.state) {
+            setLiftState(data.state);
+          } else {
+            setLiftState(state);
+          }
+          hint.textContent = "升降状态已更新。";
+        } catch (err) {
+          hint.textContent = "指令失败。";
+        } finally {
+          setLiftButtonsDisabled(false);
+        }
+      }
+
       pumpCards.forEach((card) => {
         const toggle = card.querySelector('[data-role="toggle"]');
         toggle.addEventListener("click", () => {
@@ -484,9 +523,9 @@
       }
       updateValveFlows(pump3Card?.dataset.on === "1");
 
-      liftUp.addEventListener("click", () => setLiftState("up"));
-      liftDown.addEventListener("click", () => setLiftState("down"));
-      liftStop.addEventListener("click", () => setLiftState("stop"));
+      liftUp.addEventListener("click", () => setLift("up"));
+      liftDown.addEventListener("click", () => setLift("down"));
+      liftStop.addEventListener("click", () => setLift("stop"));
       setLiftState("stop");
 
       debugToggle.addEventListener("click", () => {

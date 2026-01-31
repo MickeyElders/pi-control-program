@@ -10,16 +10,37 @@ PIP ?= $(VENV)/bin/pip
 UVICORN ?= $(VENV)/bin/uvicorn
 PORT ?= 8000
 PIN_FACTORY ?= lgpio
+GPIO_BACKEND ?=
+PIN_MODE ?=
 
 SERVICE_USER ?= $(USER)
 RELAY_GPIO ?=
-RELAY_PINS ?= $(if $(strip $(RELAY_GPIO)),$(RELAY_GPIO),27,22,23)
+DEFAULT_RELAY_PINS ?= 27,22,23
+DEFAULT_VALVE_PINS ?=
+DEFAULT_HEATER_GPIO ?=
+DEFAULT_LIFT_PINS ?=
+DEFAULT_PIN_MODE ?=
+
+ifneq (,$(filter jetson,$(GPIO_BACKEND)))
+DEFAULT_RELAY_PINS ?= 7,11,13
+DEFAULT_VALVE_PINS ?= 15,16
+DEFAULT_HEATER_GPIO ?= 18
+DEFAULT_LIFT_PINS ?= 19,21
+DEFAULT_PIN_MODE ?= BOARD
+endif
+
+RELAY_PINS ?= $(if $(strip $(RELAY_GPIO)),$(RELAY_GPIO),$(DEFAULT_RELAY_PINS))
 RELAY_ACTIVE_LOW ?= 1
 TANK_LEVELS ?= 72,58,46
 TANK_TEMPS ?= 32.5,22.0,45.0
 TANK_PHS ?= 6.8,7.2,6.5
-HEATER_GPIO ?=
-HEATER_ACTIVE_LOW ?=
+HEATER_GPIO ?= $(DEFAULT_HEATER_GPIO)
+HEATER_ACTIVE_LOW ?= 1
+VALVE_PINS ?= $(DEFAULT_VALVE_PINS)
+VALVE_ACTIVE_LOW ?= 1
+LIFT_PINS ?= $(DEFAULT_LIFT_PINS)
+LIFT_ACTIVE_LOW ?= 1
+PIN_MODE ?= $(DEFAULT_PIN_MODE)
 
 .PHONY: help deps venv install-service install reinstall uninstall start stop restart status logs
 
@@ -31,7 +52,7 @@ help:
 	@echo "make start|stop|restart|status|logs"
 	@echo ""
 	@echo "Overrides:"
-	@echo "  WORKDIR=/path/to/repo SERVICE_USER=pi RELAY_PINS=27,22,23 RELAY_ACTIVE_LOW=1 TANK_LEVELS=72,58,46 TANK_TEMPS=32.5,22.0,45.0 TANK_PHS=6.8,7.2,6.5 HEATER_GPIO=5 HEATER_ACTIVE_LOW=1 PIN_FACTORY=lgpio PORT=8000"
+	@echo "  WORKDIR=/path/to/repo SERVICE_USER=pi RELAY_PINS=27,22,23 RELAY_ACTIVE_LOW=1 TANK_LEVELS=72,58,46 TANK_TEMPS=32.5,22.0,45.0 TANK_PHS=6.8,7.2,6.5 HEATER_GPIO=5 HEATER_ACTIVE_LOW=1 VALVE_PINS=23,24 VALVE_ACTIVE_LOW=1 LIFT_PINS=5,6 LIFT_ACTIVE_LOW=1 GPIO_BACKEND=jetson PIN_MODE=BOARD PIN_FACTORY=lgpio PORT=8000"
 
 deps:
 	@command -v apt-get >/dev/null 2>&1 || { \
@@ -85,6 +106,12 @@ install-service:
 	    -e "s|^Environment=TANK_PHS=.*|Environment=TANK_PHS=$(TANK_PHS)|" \
 	    -e "s|^Environment=HEATER_GPIO=.*|Environment=HEATER_GPIO=$(HEATER_GPIO)|" \
 	    -e "s|^Environment=HEATER_ACTIVE_LOW=.*|Environment=HEATER_ACTIVE_LOW=$(HEATER_ACTIVE_LOW)|" \
+	    -e "s|^Environment=VALVE_PINS=.*|Environment=VALVE_PINS=$(VALVE_PINS)|" \
+	    -e "s|^Environment=VALVE_ACTIVE_LOW=.*|Environment=VALVE_ACTIVE_LOW=$(VALVE_ACTIVE_LOW)|" \
+	    -e "s|^Environment=LIFT_PINS=.*|Environment=LIFT_PINS=$(LIFT_PINS)|" \
+	    -e "s|^Environment=LIFT_ACTIVE_LOW=.*|Environment=LIFT_ACTIVE_LOW=$(LIFT_ACTIVE_LOW)|" \
+	    -e "s|^Environment=GPIO_BACKEND=.*|Environment=GPIO_BACKEND=$(GPIO_BACKEND)|" \
+	    -e "s|^Environment=PIN_MODE=.*|Environment=PIN_MODE=$(PIN_MODE)|" \
 	    -e "s|^Environment=GPIOZERO_PIN_FACTORY=.*|Environment=GPIOZERO_PIN_FACTORY=$(PIN_FACTORY)|" \
 	    $(SERVICE_FILE) > $$tmp; \
 	sudo install -m 644 $$tmp $(SYSTEMD_DIR)/$(SERVICE_NAME); \
