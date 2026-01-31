@@ -39,6 +39,11 @@ DEFAULT_LEVELS = [72, 58, 46]
 DEFAULT_TEMPS = [32.5, 22.0, 45.0]
 DEFAULT_PHS = [6.8, 7.2, 6.5]
 ACTIVE_LOW = os.getenv("RELAY_ACTIVE_LOW", "1").lower() in {"1", "true", "yes", "on"}
+HEATER_GPIO = os.getenv("HEATER_GPIO")
+HEATER_ACTIVE_LOW = os.getenv("HEATER_ACTIVE_LOW")
+HEATER_ACTIVE_LOW = (
+    HEATER_ACTIVE_LOW.lower() in {"1", "true", "yes", "on"} if HEATER_ACTIVE_LOW else ACTIVE_LOW
+)
 
 
 def parse_pins(value: str) -> List[int]:
@@ -141,6 +146,12 @@ relays = [DigitalOutputDevice(pin, active_high=not ACTIVE_LOW, initial_value=Fal
 for relay in relays:
     relay.off()
 
+heater = None
+if HEATER_GPIO:
+    heater_pin = int(HEATER_GPIO)
+    heater = DigitalOutputDevice(heater_pin, active_high=not HEATER_ACTIVE_LOW, initial_value=False)
+    heater.off()
+
 levels_env = os.getenv("TANK_LEVELS", "")
 tank_levels_list = parse_levels(levels_env, 3, DEFAULT_LEVELS) if levels_env else DEFAULT_LEVELS[:]
 tank_levels = {"soak": tank_levels_list[0], "fresh": tank_levels_list[1], "heat": tank_levels_list[2]}
@@ -175,6 +186,10 @@ class AutoSwitchCommand(BaseModel):
     on: bool
 
 
+class HeaterCommand(BaseModel):
+    on: bool
+
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
     pumps = [
@@ -192,6 +207,7 @@ def index(request: Request) -> HTMLResponse:
             "tank_phs": tank_phs,
             "tank_colors": tank_colors,
             "auto_switches": auto_switches,
+            "heater": {"configured": heater is not None, "on": heater.is_active if heater else False},
         },
     )
 
@@ -204,6 +220,7 @@ def api_status() -> dict:
             for idx, pin in enumerate(PINS)
         ],
         "auto": auto_switches,
+        "heater": {"configured": heater is not None, "on": heater.is_active if heater else False},
     }
 
 
@@ -229,14 +246,18 @@ def api_auto(cmd: AutoSwitchCommand) -> dict:
     else:
         auto_switches[cmd.which] = False
 
-    # Pump 3 (index 2) is driven by auto switches
-    if len(relays) > 2:
-        if any(auto_switches.values()):
-            relays[2].on()
-        else:
-            relays[2].off()
+    return {"auto": auto_switches}
 
-    return {"auto": auto_switches, "pump_on": relays[2].is_active if len(relays) > 2 else False}
+
+@app.post("/api/heater")
+def api_heater(cmd: HeaterCommand) -> dict:
+    if heater is None:
+        raise HTTPException(status_code=400, detail="Heater not configured.")
+    if cmd.on:
+        heater.on()
+    else:
+        heater.off()
+    return {"configured": True, "on": heater.is_active}
 
 
 @app.get("/api/ping")

@@ -101,6 +101,23 @@
               </div>
               <div class="tank-label">加热桶</div>
             </div>
+            <div class="heater-panel">
+              <div class="heater-status" id="heater-status">
+                {% if heater.configured %}
+                加热状态：<span data-role="heater-text">{{ "开启" if heater.on else "关闭" }}</span>
+                {% else %}
+                加热状态：未配置
+                {% endif %}
+              </div>
+              <button
+                class="btn heater-toggle"
+                id="heater-toggle"
+                type="button"
+                {% if not heater.configured %}disabled{% endif %}
+              >
+                {{ "停止加热" if heater.on else "开始加热" }}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -142,8 +159,8 @@
           {% endfor %}
 
           <article
-            class="pump-card auto{% if pump3 and pump3.on %} on{% endif %}"
-            data-kind="auto"
+            class="pump-card{% if pump3 and pump3.on %} on{% endif %}"
+            data-kind="pump"
             data-index="2"
             data-on="{{ "1" if pump3 and pump3.on else "0" }}"
           >
@@ -156,7 +173,7 @@
               </div>
               <div class="pump-label">
                 <h2>3号水泵</h2>
-                <p class="pump-route">自动开关控制</p>
+                <p class="pump-route">浸泡桶 → 自动阀</p>
                 {% if pump3 %}
                 <p class="pump-meta">GPIO <span class="mono">{{ pump3.pin }}</span></p>
                 {% endif %}
@@ -166,6 +183,10 @@
             <div class="status">
               <span class="dot" data-role="dot"></span>
               <span class="status-text" data-role="status">关闭</span>
+            </div>
+
+            <div class="controls">
+              <button class="btn toggle" data-role="toggle" type="button">打开</button>
             </div>
 
             <div class="auto-switches">
@@ -196,7 +217,7 @@
 
     <script>
       const pumpCards = Array.from(document.querySelectorAll('.pump-card[data-kind="pump"]'));
-      const autoCard = document.querySelector('.pump-card[data-kind="auto"]');
+      const pump3Card = document.querySelector('.pump-card[data-index="2"]');
       const autoRows = Array.from(document.querySelectorAll(".auto-row"));
       const hint = document.getElementById("hint");
       const pipes = new Map(
@@ -211,6 +232,8 @@
       const liftDown = document.getElementById("lift-down");
       const liftStop = document.getElementById("lift-stop");
       const debugToggle = document.getElementById("debug-toggle");
+      const heaterToggle = document.getElementById("heater-toggle");
+      const heaterText = document.querySelector('[data-role="heater-text"]');
 
       function isMobileDevice() {
         const ua = navigator.userAgent || "";
@@ -315,6 +338,18 @@
         });
       }
 
+      function updateValveFlows(pumpOn) {
+        autoRows.forEach((row) => {
+          const which = row.dataset.auto;
+          const active = row.dataset.on === "1" && pumpOn;
+          if (which === "fresh") {
+            setPipeFlow(1, active);
+          } else if (which === "heat") {
+            setPipeFlow(3, active);
+          }
+        });
+      }
+
       function setAutoRow(row, on) {
         row.dataset.on = on ? "1" : "0";
         const btn = row.querySelector("button");
@@ -323,23 +358,23 @@
           btn.classList.toggle("on", !on);
           btn.classList.toggle("off", on);
         }
-        const which = row.dataset.auto;
-        if (which === "fresh") {
-          setPipeFlow(1, on);
-        } else if (which === "heat") {
-          setPipeFlow(3, on);
-        }
       }
 
-      function setAutoCardStatus(on) {
-        if (!autoCard) return;
-        const dot = autoCard.querySelector('[data-role="dot"]');
-        const label = autoCard.querySelector('[data-role="status"]');
+      function setPumpCardStatus(card, on) {
+        if (!card) return;
+        const dot = card.querySelector('[data-role="dot"]');
+        const label = card.querySelector('[data-role="status"]');
         label.textContent = on ? "开启" : "关闭";
         dot.classList.toggle("on", on);
         dot.classList.toggle("off", !on);
-        autoCard.classList.toggle("on", on);
-        autoCard.dataset.on = on ? "1" : "0";
+        card.classList.toggle("on", on);
+        card.dataset.on = on ? "1" : "0";
+        const toggle = card.querySelector('[data-role="toggle"]');
+        if (toggle) {
+          toggle.textContent = on ? "关闭" : "打开";
+          toggle.classList.toggle("on", !on);
+          toggle.classList.toggle("off", on);
+        }
       }
 
       async function refreshStatus() {
@@ -354,7 +389,7 @@
             }
           });
           if (data.relays && data.relays[2]) {
-            setAutoCardStatus(Boolean(data.relays[2].on));
+            setPumpCardStatus(pump3Card, Boolean(data.relays[2].on));
           }
           if (data.auto) {
             autoRows.forEach((row) => {
@@ -362,6 +397,18 @@
               setAutoRow(row, Boolean(data.auto[which]));
             });
           }
+          if (data.heater && heaterToggle && heaterText) {
+            const configured = Boolean(data.heater.configured);
+            heaterToggle.disabled = !configured;
+            if (configured) {
+              const on = Boolean(data.heater.on);
+              heaterText.textContent = on ? "开启" : "关闭";
+              heaterToggle.textContent = on ? "停止加热" : "开始加热";
+              heaterToggle.classList.toggle("on", !on);
+              heaterToggle.classList.toggle("off", on);
+            }
+          }
+          updateValveFlows(pump3Card?.dataset.on === "1");
           hint.textContent = "Last update: " + new Date().toLocaleTimeString();
         } catch (err) {
           hint.textContent = "Status unavailable.";
@@ -389,7 +436,7 @@
       }
 
       async function setAutoSwitch(row, on) {
-        setCardBusy(autoCard, true);
+        setCardBusy(pump3Card, true);
         hint.textContent = on ? "正在开启..." : "正在关闭...";
         const which = row.dataset.auto;
         try {
@@ -405,14 +452,12 @@
               setAutoRow(r, Boolean(data.auto[key]));
             });
           }
-          if (typeof data.pump_on === "boolean") {
-            setAutoCardStatus(Boolean(data.pump_on));
-          }
-          hint.textContent = data.pump_on ? "水泵已开启。" : "水泵已关闭。";
+          updateValveFlows(pump3Card?.dataset.on === "1");
+          hint.textContent = "阀门状态已更新。";
         } catch (err) {
           hint.textContent = "指令失败。";
         } finally {
-          setCardBusy(autoCard, false);
+          setCardBusy(pump3Card, false);
         }
       }
 
@@ -434,9 +479,10 @@
         setAutoRow(row, row.dataset.on === "1");
       });
 
-      if (autoCard) {
-        setAutoCardStatus(autoCard.dataset.on === "1");
+      if (pump3Card) {
+        setPumpCardStatus(pump3Card, pump3Card.dataset.on === "1");
       }
+      updateValveFlows(pump3Card?.dataset.on === "1");
 
       liftUp.addEventListener("click", () => setLiftState("up"));
       liftDown.addEventListener("click", () => setLiftState("down"));
@@ -447,6 +493,28 @@
         document.body.classList.toggle("debug");
         debugToggle.classList.toggle("active");
       });
+
+      if (heaterToggle) {
+        heaterToggle.addEventListener("click", async () => {
+          if (heaterToggle.disabled) return;
+          const nextOn = heaterText?.textContent !== "开启";
+          try {
+            const res = await fetch("/api/heater", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ on: nextOn }),
+            });
+            const data = await res.json();
+            if (data.configured && heaterText) {
+              const on = Boolean(data.on);
+              heaterText.textContent = on ? "开启" : "关闭";
+              heaterToggle.textContent = on ? "停止加热" : "开始加热";
+            }
+          } catch (err) {
+            hint.textContent = "指令失败。";
+          }
+        });
+      }
 
       refreshStatus();
       setInterval(refreshStatus, 1000);

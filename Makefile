@@ -18,6 +18,8 @@ RELAY_ACTIVE_LOW ?= 1
 TANK_LEVELS ?= 72,58,46
 TANK_TEMPS ?= 32.5,22.0,45.0
 TANK_PHS ?= 6.8,7.2,6.5
+HEATER_GPIO ?=
+HEATER_ACTIVE_LOW ?=
 
 .PHONY: help deps venv install-service install reinstall uninstall start stop restart status logs
 
@@ -29,7 +31,7 @@ help:
 	@echo "make start|stop|restart|status|logs"
 	@echo ""
 	@echo "Overrides:"
-	@echo "  WORKDIR=/path/to/repo SERVICE_USER=pi RELAY_PINS=27,22,23 RELAY_ACTIVE_LOW=1 TANK_LEVELS=72,58,46 TANK_TEMPS=32.5,22.0,45.0 TANK_PHS=6.8,7.2,6.5 PIN_FACTORY=lgpio PORT=8000"
+	@echo "  WORKDIR=/path/to/repo SERVICE_USER=pi RELAY_PINS=27,22,23 RELAY_ACTIVE_LOW=1 TANK_LEVELS=72,58,46 TANK_TEMPS=32.5,22.0,45.0 TANK_PHS=6.8,7.2,6.5 HEATER_GPIO=5 HEATER_ACTIVE_LOW=1 PIN_FACTORY=lgpio PORT=8000"
 
 deps:
 	@command -v apt-get >/dev/null 2>&1 || { \
@@ -81,6 +83,8 @@ install-service:
 	    -e "s|^Environment=TANK_LEVELS=.*|Environment=TANK_LEVELS=$(TANK_LEVELS)|" \
 	    -e "s|^Environment=TANK_TEMPS=.*|Environment=TANK_TEMPS=$(TANK_TEMPS)|" \
 	    -e "s|^Environment=TANK_PHS=.*|Environment=TANK_PHS=$(TANK_PHS)|" \
+	    -e "s|^Environment=HEATER_GPIO=.*|Environment=HEATER_GPIO=$(HEATER_GPIO)|" \
+	    -e "s|^Environment=HEATER_ACTIVE_LOW=.*|Environment=HEATER_ACTIVE_LOW=$(HEATER_ACTIVE_LOW)|" \
 	    -e "s|^Environment=GPIOZERO_PIN_FACTORY=.*|Environment=GPIOZERO_PIN_FACTORY=$(PIN_FACTORY)|" \
 	    $(SERVICE_FILE) > $$tmp; \
 	sudo install -m 644 $$tmp $(SYSTEMD_DIR)/$(SERVICE_NAME); \
