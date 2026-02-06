@@ -834,6 +834,92 @@ h2 {
   font-size: 14px;
 }
 
+@media (min-width: 900px) {
+  :root {
+    --tank-height: 300px;
+    --tank-gap: 14px;
+  }
+
+  .stage {
+    padding: 28px 20px 36px;
+  }
+
+  .panel {
+    padding: 26px;
+  }
+
+  .panel-header {
+    margin-bottom: 18px;
+  }
+
+  h1 {
+    font-size: 28px;
+  }
+
+  .tank-row {
+    margin-bottom: 20px;
+  }
+
+  .grid {
+    gap: 14px;
+  }
+
+  .pump-card {
+    min-height: 200px;
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .pump-icon {
+    width: 52px;
+    height: 52px;
+  }
+
+  .pump-center {
+    width: 18px;
+    height: 18px;
+    top: 17px;
+    left: 17px;
+  }
+
+  .pump-spout {
+    top: 20px;
+  }
+
+  .water {
+    top: 30px;
+    height: 26px;
+  }
+
+  .btn {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .lift-controls .btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    width: 88px;
+  }
+
+  .heater-panel {
+    padding: 10px;
+  }
+
+  .auto-row {
+    padding: 8px 10px;
+  }
+
+  .btn.toggle.auto {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .hint {
+    margin-top: 16px;
+  }
+}
+
 @keyframes rise {
   from {
     opacity: 0;
