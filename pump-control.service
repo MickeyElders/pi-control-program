@@ -17,9 +17,9 @@ Environment=VALVE_PINS=15,16
 Environment=VALVE_ACTIVE_LOW=1
 Environment=LIFT_PINS=19,21
 Environment=LIFT_ACTIVE_LOW=1
-Environment=GPIO_BACKEND=jetson
+Environment=GPIO_BACKEND=rpigpio
 Environment=PIN_MODE=BOARD
-Environment=GPIOZERO_PIN_FACTORY=lgpio
+Environment=GPIOZERO_PIN_FACTORY=rpi
 ExecStart=/home/pi/pi-control-program/.venv/bin/uvicorn app:app --host 0.0.0.0 --port 8000
 Restart=on-failure
 RestartSec=2

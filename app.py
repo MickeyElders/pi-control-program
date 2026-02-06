@@ -13,6 +13,11 @@ except ImportError:
     JetsonGPIO = None
 
 try:
+    import RPi.GPIO as RPiGPIO
+except ImportError:
+    RPiGPIO = None
+
+try:
     from gpiozero import DigitalOutputDevice as GpiozeroDigitalOutputDevice
 except ImportError:
     GpiozeroDigitalOutputDevice = None
@@ -24,13 +29,19 @@ if GPIO_BACKEND in {"jetson", "jetson-gpio"}:
     if not JetsonGPIO:
         raise RuntimeError("GPIO_BACKEND=jetson requires Jetson.GPIO to be installed.")
     BACKEND = "jetson"
-elif GPIO_BACKEND in {"gpiozero", "rpi"}:
+elif GPIO_BACKEND in {"rpigpio", "rpi", "raspi", "raspberrypi"}:
+    if not RPiGPIO:
+        raise RuntimeError("GPIO_BACKEND=rpigpio requires RPi.GPIO to be installed.")
+    BACKEND = "rpigpio"
+elif GPIO_BACKEND in {"gpiozero"}:
     if not GpiozeroDigitalOutputDevice:
         raise RuntimeError("GPIO_BACKEND=gpiozero requires gpiozero to be installed.")
     BACKEND = "gpiozero"
 else:
     if JetsonGPIO:
         BACKEND = "jetson"
+    elif RPiGPIO:
+        BACKEND = "rpigpio"
     elif GpiozeroDigitalOutputDevice:
         BACKEND = "gpiozero"
     else:
@@ -68,6 +79,39 @@ class JetsonOutputDevice:
 
     def close(self) -> None:
         JetsonGPIO.cleanup(self.pin)
+
+
+class RpiOutputDevice:
+    def __init__(self, pin: int, active_low: bool = False, initial_value: bool = False) -> None:
+        self.pin = pin
+        self.active_low = active_low
+        self._is_active = bool(initial_value)
+        if PIN_MODE == "BCM":
+            RPiGPIO.setmode(RPiGPIO.BCM)
+        else:
+            RPiGPIO.setmode(RPiGPIO.BOARD)
+        RPiGPIO.setwarnings(False)
+        level = RPiGPIO.HIGH if (initial_value ^ active_low) else RPiGPIO.LOW
+        RPiGPIO.setup(pin, RPiGPIO.OUT, initial=level)
+
+    def on(self) -> None:
+        RPiGPIO.output(self.pin, RPiGPIO.LOW if self.active_low else RPiGPIO.HIGH)
+        self._is_active = True
+
+    def off(self) -> None:
+        RPiGPIO.output(self.pin, RPiGPIO.HIGH if self.active_low else RPiGPIO.LOW)
+        self._is_active = False
+
+    @property
+    def is_active(self) -> bool:
+        return self._is_active
+
+    @property
+    def value(self) -> int:
+        return 1 if self._is_active else 0
+
+    def close(self) -> None:
+        RPiGPIO.cleanup(self.pin)
 
 
 class GpiozeroOutputDevice:
@@ -122,6 +166,8 @@ class StubOutputDevice:
 def create_output_device(pin: int, active_low: bool, initial_value: bool = False):
     if BACKEND == "jetson":
         return JetsonOutputDevice(pin, active_low=active_low, initial_value=initial_value)
+    if BACKEND == "rpigpio":
+        return RpiOutputDevice(pin, active_low=active_low, initial_value=initial_value)
     if BACKEND == "gpiozero":
         return GpiozeroOutputDevice(pin, active_low=active_low, initial_value=initial_value)
     return StubOutputDevice(pin, active_low=active_low, initial_value=initial_value)

@@ -36,8 +36,8 @@ Open `http://<raspberrypi-ip>:8000`.
 - `TANK_PHS` (default `6.8,7.2,6.5`): soak/fresh/heat pH values.
 - `HEATER_GPIO`: optional BCM pin for heater relay.
 - `HEATER_ACTIVE_LOW`: optional trigger polarity for heater (defaults to `RELAY_ACTIVE_LOW`).
-- `GPIO_BACKEND` (default auto): `jetson` or `gpiozero`.
-- `PIN_MODE` (default `BOARD`): pin numbering for Jetson (`BOARD` or `BCM`).
+- `GPIO_BACKEND` (default auto): `jetson`, `rpigpio`, or `gpiozero`.
+- `PIN_MODE` (default `BOARD`): pin numbering for Jetson/RPi.GPIO (`BOARD` or `BCM`).
 - `GPIOZERO_PIN_FACTORY` (default `lgpio`): GPIO backend (`lgpio` or `rpi`).
 
 ## Systemd + Make automation
@@ -73,6 +73,15 @@ export LIFT_PINS=19,21
 ```
 
 Note: Jetson GPIO outputs **3.3V only**. If your relay board needs a 5V control signal, use a level shifter/transistor or a 3.3V-compatible relay input.
+
+## Raspberry Pi (BOARD numbering)
+If you wire by physical pin numbers (e.g. 7/11/13), use RPi.GPIO and BOARD mode:
+```bash
+export GPIO_BACKEND=rpigpio
+export PIN_MODE=BOARD
+export RELAY_PINS=7,11,13
+```
+If you prefer BCM numbering, keep the defaults and omit `GPIO_BACKEND`/`PIN_MODE`.
 
 Reinstall / uninstall:
 ```bash
