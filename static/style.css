@@ -37,7 +37,7 @@ body::before {
   content: "";
   position: fixed;
   inset: -20%;
-  background-image: url("/static/lab-bg.svg");
+  background-image: url("lab-bg.svg");
   background-size: cover;
   background-position: center;
   filter: blur(24px) saturate(135%);
@@ -569,6 +569,31 @@ h2 {
   font-size: 13px;
 }
 
+.pump-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid var(--edge);
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(90, 110, 140, 0.9);
+  white-space: nowrap;
+}
+
+.status-chip .dot {
+  width: 8px;
+  height: 8px;
+}
+
 .pump-route {
   font-size: 14px;
   font-weight: 600;
@@ -716,8 +741,57 @@ h2 {
 
 .btn.toggle {
   width: 100%;
-  justify-content: center;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 10px 16px 10px 58px;
+  min-height: 40px;
+  text-align: right;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn.toggle::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  width: 32px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+  transition: background 180ms ease;
+}
+
+.btn.toggle::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(10, 16, 24, 0.18);
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.btn.toggle.on::before {
+  background: linear-gradient(135deg, rgba(75, 142, 247, 0.9), rgba(75, 193, 247, 0.9));
+}
+
+.btn.toggle.on::after {
+  transform: translateX(14px);
+}
+
+.btn.toggle:disabled::before {
+  background: rgba(15, 23, 42, 0.12);
+}
+
+.btn.toggle:disabled::after {
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: none;
+}
 }
 
 .auto-switches {
@@ -757,8 +831,8 @@ h2 {
 
 .btn.heater-toggle {
   width: 100%;
-  padding: 10px 12px;
-  border-radius: 12px;
+  padding: 10px 16px 10px 58px;
+  border-radius: 999px;
 }
 
 .btn.heater-toggle:disabled {
@@ -799,8 +873,25 @@ h2 {
 
 .btn.toggle.auto {
   width: auto;
-  padding: 8px 12px;
+  padding: 6px 12px 6px 46px;
   font-size: 12px;
+  min-height: 32px;
+}
+
+.btn.toggle.auto::before {
+  left: 10px;
+  width: 24px;
+  height: 14px;
+}
+
+.btn.toggle.auto::after {
+  left: 12px;
+  width: 10px;
+  height: 10px;
+}
+
+.btn.toggle.auto.on::after {
+  transform: translateX(10px);
 }
 
 .btn:disabled {
@@ -809,12 +900,12 @@ h2 {
   transform: none;
 }
 
-.btn.on {
+.btn.on:not(.toggle):not(.heater-toggle) {
   background: linear-gradient(135deg, rgba(47, 159, 122, 0.95), rgba(83, 208, 170, 0.95));
   color: #f6fffb;
 }
 
-.btn.off {
+.btn.off:not(.toggle):not(.heater-toggle) {
   background: linear-gradient(135deg, rgba(225, 86, 86, 0.95), rgba(244, 120, 110, 0.95));
   color: #fff8f8;
 }
