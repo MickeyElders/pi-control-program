@@ -23,12 +23,6 @@
             <button class="btn debug-toggle" id="debug-toggle" type="button">调试模式</button>
           </div>
           <div class="meta">
-            <div class="meta-row">
-              低电平触发: <span class="mono">{{ "true" if active_low else "false" }}</span>
-            </div>
-            <div class="meta-row">
-              GPIO: <span class="mono">{{ pins | join(", ") }}</span>
-            </div>
             <div class="heater-panel header-heater">
               <div class="heater-status" id="heater-status">
                 {% if heater.configured %}
