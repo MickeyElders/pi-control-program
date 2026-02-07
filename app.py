@@ -348,10 +348,8 @@ def set_lift_state(state: str) -> None:
         return
     if state == "up":
         lift_devices["up"].on()
-        lift_devices["down"].off()
     elif state == "down":
         lift_devices["down"].on()
-        lift_devices["up"].off()
     else:
         lift_devices["up"].off()
         lift_devices["down"].off()
