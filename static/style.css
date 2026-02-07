@@ -346,6 +346,9 @@ body::after {
 
 .tank.small {
   justify-items: start;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 0 12px;
 }
 
 .tank.soak {
@@ -365,6 +368,25 @@ body::after {
   font-weight: 600;
   color: rgba(15, 23, 42, 0.7);
   letter-spacing: 0.04em;
+}
+
+.tank.small .tank-body {
+  grid-column: 1;
+}
+
+.tank.small .tank-label {
+  grid-column: 2;
+  align-self: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid var(--edge);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.tank.small.fresh {
+  transform: translateY(10px);
 }
 
 .tank-percent {
@@ -1125,4 +1147,8 @@ body.is-mobile .tank.soak .tank-body {
 
 body.is-mobile .tank.small .tank-body {
   width: 210px;
+}
+
+body.is-mobile .tank.small.fresh {
+  transform: translateY(6px);
 }

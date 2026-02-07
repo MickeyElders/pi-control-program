@@ -308,8 +308,8 @@
         card.classList.toggle("on", on);
         card.dataset.on = on ? "1" : "0";
         toggle.textContent = on ? "关闭" : "打开";
-        toggle.classList.toggle("on", !on);
-        toggle.classList.toggle("off", on);
+        toggle.classList.toggle("on", on);
+        toggle.classList.toggle("off", !on);
         const index = Number(card.dataset.index);
         if (index === 0) {
           setPipeFlow(0, on);
@@ -361,8 +361,8 @@
         const btn = row.querySelector("button");
         if (btn) {
           btn.textContent = on ? "关闭" : "打开";
-          btn.classList.toggle("on", !on);
-          btn.classList.toggle("off", on);
+          btn.classList.toggle("on", on);
+          btn.classList.toggle("off", !on);
         }
       }
 
@@ -378,8 +378,8 @@
         const toggle = card.querySelector('[data-role="toggle"]');
         if (toggle) {
           toggle.textContent = on ? "关闭" : "打开";
-          toggle.classList.toggle("on", !on);
-          toggle.classList.toggle("off", on);
+          toggle.classList.toggle("on", on);
+          toggle.classList.toggle("off", !on);
         }
       }
 
@@ -413,8 +413,8 @@
               const on = Boolean(data.heater.on);
               heaterText.textContent = on ? "开启" : "关闭";
               heaterToggle.textContent = on ? "停止加热" : "开始加热";
-              heaterToggle.classList.toggle("on", !on);
-              heaterToggle.classList.toggle("off", on);
+              heaterToggle.classList.toggle("on", on);
+              heaterToggle.classList.toggle("off", !on);
             }
           }
           if (data.lift) {
