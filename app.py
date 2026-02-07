@@ -178,24 +178,8 @@ DEFAULT_LEVELS = [72, 58, 46]
 DEFAULT_TEMPS = [32.5, 22.0, 45.0]
 DEFAULT_PHS = [6.8, 7.2, 6.5]
 ACTIVE_LOW = os.getenv("RELAY_ACTIVE_LOW", "1").lower() in {"1", "true", "yes", "on"}
-HEATER_GPIO = os.getenv("HEATER_GPIO")
-HEATER_ACTIVE_LOW = os.getenv("HEATER_ACTIVE_LOW")
-HEATER_ACTIVE_LOW = (
-    HEATER_ACTIVE_LOW.lower() in {"1", "true", "yes", "on"} if HEATER_ACTIVE_LOW else ACTIVE_LOW
-)
-VALVE_PINS = os.getenv("VALVE_PINS")
-VALVE_GPIO_FRESH = os.getenv("VALVE_GPIO_FRESH")
-VALVE_GPIO_HEAT = os.getenv("VALVE_GPIO_HEAT")
-VALVE_ACTIVE_LOW = os.getenv("VALVE_ACTIVE_LOW")
-VALVE_ACTIVE_LOW = (
-    VALVE_ACTIVE_LOW.lower() in {"1", "true", "yes", "on"} if VALVE_ACTIVE_LOW else ACTIVE_LOW
-)
-LIFT_PINS = os.getenv("LIFT_PINS")
-LIFT_UP_GPIO = os.getenv("LIFT_UP_GPIO")
-LIFT_DOWN_GPIO = os.getenv("LIFT_DOWN_GPIO")
-LIFT_ACTIVE_LOW = os.getenv("LIFT_ACTIVE_LOW")
-LIFT_ACTIVE_LOW = (
-    LIFT_ACTIVE_LOW.lower() in {"1", "true", "yes", "on"} if LIFT_ACTIVE_LOW else ACTIVE_LOW
+PIN_ORDER_NOTE = (
+    "RELAY_PINS order: pump1,pump2,pump3,valve1,valve2,heater,lift_up,lift_down"
 )
 
 
@@ -301,48 +285,38 @@ for relay in relays:
     relay.off()
 
 valve_pins: List[int] = []
-if VALVE_PINS:
-    valve_pins = parse_pins(VALVE_PINS)
-elif VALVE_GPIO_FRESH and VALVE_GPIO_HEAT:
-    valve_pins = [int(VALVE_GPIO_FRESH), int(VALVE_GPIO_HEAT)]
-elif len(all_pins) >= 5:
+if len(all_pins) >= 5:
     valve_pins = all_pins[3:5]
 
 valves: Optional[Dict[str, object]] = None
 if len(valve_pins) >= 2:
     valves = {
-        "fresh": create_output_device(valve_pins[0], active_low=VALVE_ACTIVE_LOW, initial_value=False),
-        "heat": create_output_device(valve_pins[1], active_low=VALVE_ACTIVE_LOW, initial_value=False),
+        "fresh": create_output_device(valve_pins[0], active_low=ACTIVE_LOW, initial_value=False),
+        "heat": create_output_device(valve_pins[1], active_low=ACTIVE_LOW, initial_value=False),
     }
     for valve in valves.values():
         valve.off()
 
 lift_pins: List[int] = []
-if LIFT_PINS:
-    lift_pins = parse_pins(LIFT_PINS)
-elif LIFT_UP_GPIO and LIFT_DOWN_GPIO:
-    lift_pins = [int(LIFT_UP_GPIO), int(LIFT_DOWN_GPIO)]
-elif len(all_pins) >= 8:
+if len(all_pins) >= 8:
     lift_pins = all_pins[6:8]
 
 lift_devices: Optional[Dict[str, object]] = None
 lift_state = "stop"
 if len(lift_pins) >= 2:
     lift_devices = {
-        "up": create_output_device(lift_pins[0], active_low=LIFT_ACTIVE_LOW, initial_value=False),
-        "down": create_output_device(lift_pins[1], active_low=LIFT_ACTIVE_LOW, initial_value=False),
+        "up": create_output_device(lift_pins[0], active_low=ACTIVE_LOW, initial_value=False),
+        "down": create_output_device(lift_pins[1], active_low=ACTIVE_LOW, initial_value=False),
     }
     for dev in lift_devices.values():
         dev.off()
 
 heater = None
 heater_pin = None
-if HEATER_GPIO:
-    heater_pin = int(HEATER_GPIO)
-elif len(all_pins) >= 6:
+if len(all_pins) >= 6:
     heater_pin = all_pins[5]
 if heater_pin is not None:
-    heater = create_output_device(heater_pin, active_low=HEATER_ACTIVE_LOW, initial_value=False)
+    heater = create_output_device(heater_pin, active_low=ACTIVE_LOW, initial_value=False)
     heater.off()
 
 levels_env = os.getenv("TANK_LEVELS", "")
@@ -458,18 +432,11 @@ def api_auto(cmd: AutoSwitchCommand) -> dict:
         raise HTTPException(status_code=400, detail="Valves not configured.")
     if cmd.which not in auto_switches:
         raise HTTPException(status_code=400, detail="Invalid auto switch.")
-    if cmd.on:
-        # Only one direction at a time
-        for key in auto_switches:
-            auto_switches[key] = key == cmd.which
-            if valves:
-                if auto_switches[key]:
-                    valves[key].on()
-                else:
-                    valves[key].off()
-    else:
-        auto_switches[cmd.which] = False
-        if valves:
+    auto_switches[cmd.which] = bool(cmd.on)
+    if valves:
+        if cmd.on:
+            valves[cmd.which].on()
+        else:
             valves[cmd.which].off()
 
     return {"auto": {"fresh": auto_switches["fresh"], "heat": auto_switches["heat"], "configured": valves is not None}}
