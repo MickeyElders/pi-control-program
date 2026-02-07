@@ -1,4 +1,5 @@
 import os
+import time
 from typing import Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, Request
@@ -343,18 +344,32 @@ def set_lift_state(state: str) -> None:
     global lift_state
     if state not in {"up", "down", "stop"}:
         raise ValueError("Invalid lift state.")
-    lift_state = state
+    prev_state = lift_state
     if not lift_devices:
+        lift_state = state
         return
     if state == "up":
         lift_devices["down"].off()
         lift_devices["up"].on()
+        time.sleep(0.2)
+        lift_devices["up"].off()
+        lift_state = "up"
     elif state == "down":
         lift_devices["up"].off()
         lift_devices["down"].on()
+        time.sleep(0.2)
+        lift_devices["down"].off()
+        lift_state = "down"
     else:
+        if prev_state == "up":
+            lift_devices["up"].on()
+            time.sleep(0.2)
+        elif prev_state == "down":
+            lift_devices["down"].on()
+            time.sleep(0.2)
         lift_devices["up"].off()
         lift_devices["down"].off()
+        lift_state = "stop"
 
 app = FastAPI(title="Pump Relay Control")
 app.mount("/static", StaticFiles(directory="static"), name="static")
