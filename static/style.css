@@ -94,7 +94,7 @@ body::after {
   grid-template-columns: minmax(120px, 150px) minmax(240px, 1fr) minmax(80px, 120px) minmax(200px, 1fr);
   column-gap: 0;
   row-gap: 16px;
-  align-items: end;
+  align-items: start;
   margin-bottom: 28px;
 }
 
@@ -111,8 +111,8 @@ body::after {
   gap: var(--tank-gap);
   align-items: start;
   align-content: space-between;
-  align-self: stretch;
-  height: 100%;
+  align-self: start;
+  height: var(--tank-height);
 }
 
 .lift-panel {
@@ -242,7 +242,7 @@ body::after {
   display: grid;
   gap: var(--tank-gap);
   height: var(--tank-height);
-  align-self: end;
+  align-self: start;
   align-content: space-between;
   justify-items: stretch;
 }
@@ -371,6 +371,7 @@ body::after {
   font-weight: 600;
   color: rgba(15, 23, 42, 0.7);
   letter-spacing: 0.04em;
+  line-height: 1.2;
 }
 
 .tank.small .tank-body {
