@@ -274,22 +274,10 @@
         });
       }
 
-      updateViewportClass();
-      updatePanelScale();
-
-      window.addEventListener("resize", () => {
-        updateViewportClass();
-        updatePanelScale();
-      });
-
       window.addEventListener("load", () => {
         updateViewportClass();
         updatePanelScale();
-      });
-
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener("resize", updatePanelScale);
-      }
+      }, { once: true });
 
       function setPipeFlow(index, on) {
         const pipe = pipes.get(String(index));
