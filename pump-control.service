@@ -11,9 +11,8 @@ Environment=RELAY_ACTIVE_LOW=1
 Environment=TANK_LEVELS=72,58,46
 Environment=TANK_TEMPS=32.5,22.0,45.0
 Environment=TANK_PHS=6.8,7.2,6.5
-Environment=GPIO_BACKEND=rpigpio
-Environment=PIN_MODE=BOARD
-Environment=GPIOZERO_PIN_FACTORY=rpi
+Environment=GPIO_BACKEND=gpiozero
+Environment=GPIOZERO_PIN_FACTORY=lgpio
 ExecStart=/home/pi/pi-control-program/.venv/bin/uvicorn app:app --host 0.0.0.0 --port 8000
 Restart=on-failure
 RestartSec=2
