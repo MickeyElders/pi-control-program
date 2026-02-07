@@ -110,6 +110,9 @@ body::after {
   display: grid;
   gap: var(--tank-gap);
   align-items: start;
+  align-content: space-between;
+  align-self: stretch;
+  height: 100%;
 }
 
 .lift-panel {
@@ -385,9 +388,6 @@ body::after {
   white-space: nowrap;
 }
 
-.tank.small.fresh {
-  transform: translateY(10px);
-}
 
 .tank-percent {
   position: absolute;
@@ -1147,8 +1147,4 @@ body.is-mobile .tank.soak .tank-body {
 
 body.is-mobile .tank.small .tank-body {
   width: 210px;
-}
-
-body.is-mobile .tank.small.fresh {
-  transform: translateY(6px);
 }
