@@ -284,14 +284,15 @@ def parse_float_values(value: str, count: int, defaults: List[float]) -> List[fl
 
 pins_env = os.getenv("RELAY_PINS")
 if pins_env:
-    PINS = parse_pins(pins_env)
+    all_pins = parse_pins(pins_env)
 else:
     relay_gpio = os.getenv("RELAY_GPIO")
     if relay_gpio:
-        PINS = [int(relay_gpio)]
+        all_pins = [int(relay_gpio)]
     else:
-        PINS = parse_pins(DEFAULT_PINS)
+        all_pins = parse_pins(DEFAULT_PINS)
 
+PINS = all_pins[:3]
 if not PINS:
     raise RuntimeError("No relay pins configured. Set RELAY_PINS or RELAY_GPIO.")
 
@@ -304,6 +305,8 @@ if VALVE_PINS:
     valve_pins = parse_pins(VALVE_PINS)
 elif VALVE_GPIO_FRESH and VALVE_GPIO_HEAT:
     valve_pins = [int(VALVE_GPIO_FRESH), int(VALVE_GPIO_HEAT)]
+elif len(all_pins) >= 5:
+    valve_pins = all_pins[3:5]
 
 valves: Optional[Dict[str, object]] = None
 if len(valve_pins) >= 2:
@@ -319,6 +322,8 @@ if LIFT_PINS:
     lift_pins = parse_pins(LIFT_PINS)
 elif LIFT_UP_GPIO and LIFT_DOWN_GPIO:
     lift_pins = [int(LIFT_UP_GPIO), int(LIFT_DOWN_GPIO)]
+elif len(all_pins) >= 8:
+    lift_pins = all_pins[6:8]
 
 lift_devices: Optional[Dict[str, object]] = None
 lift_state = "stop"
@@ -331,8 +336,12 @@ if len(lift_pins) >= 2:
         dev.off()
 
 heater = None
+heater_pin = None
 if HEATER_GPIO:
     heater_pin = int(HEATER_GPIO)
+elif len(all_pins) >= 6:
+    heater_pin = all_pins[5]
+if heater_pin is not None:
     heater = create_output_device(heater_pin, active_low=HEATER_ACTIVE_LOW, initial_value=False)
     heater.off()
 

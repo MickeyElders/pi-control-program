@@ -23,6 +23,9 @@ Open `http://<raspberrypi-ip>:8000`.
 
 ## Config
 - `RELAY_PINS` (default `27,22,23`): comma-separated BCM pins.
+- If you want a single list for everything, set `RELAY_PINS` in this order:
+  `pump1,pump2,pump3,valve1,valve2,heater,lift_up,lift_down`
+  (extra pins are optional; any missing entries are treated as not configured).
 - `RELAY_GPIO`: optional single BCM pin (used only when `RELAY_PINS` is not set).
 - `RELAY_ACTIVE_LOW` (default `1`): set to `1` for low-level trigger, `0` for high-level trigger.
 - `VALVE_PINS`: optional two pins for pump3 valves (format `pin_fresh,pin_heat`).
