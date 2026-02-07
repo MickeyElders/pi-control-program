@@ -897,7 +897,8 @@ h2 {
 .btn.toggle.auto {
   width: auto;
   padding: 6px 12px 6px 46px;
-  font-size: 12px;
+  font-size: 0;
+  color: transparent;
   min-height: 32px;
 }
 
