@@ -25,7 +25,7 @@ Open `http://<raspberrypi-ip>:8000`.
 - GPIO pins are hardcoded in `app.py`:
   `PIN_PUMP1=4`, `PIN_PUMP2=14`, `PIN_PUMP3=15`,
   `PIN_VALVE_FRESH=17`, `PIN_VALVE_HEAT=18`, `PIN_HEATER=27`,
-  `PIN_LIFT_UP=22`, `PIN_LIFT_DOWN=23` (BCM numbering).
+  `PIN_LIFT_UP=22`, `PIN_LIFT_DOWN=24` (BCM numbering).
 - To change pins, edit `app.py` directly.
 - `RELAY_ACTIVE_LOW` (default `1`): set to `1` for low-level trigger, `0` for high-level trigger.
 - `TANK_LEVELS` (default `72,58,46`): soak/fresh/heat water level percentages.

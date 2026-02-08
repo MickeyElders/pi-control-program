@@ -1,4 +1,5 @@
 import os
+import time
 from typing import List
 
 from fastapi import FastAPI, HTTPException, Request
@@ -186,6 +187,7 @@ PIN_VALVE_HEAT = 18
 PIN_HEATER = 27
 PIN_LIFT_UP = 22
 PIN_LIFT_DOWN = 24
+LIFT_PULSE_SEC = 0.3
 
 
 def clamp_level(value: int) -> int:
@@ -308,13 +310,17 @@ def set_lift_state(state: str) -> None:
     if state == "up":
         lift_down.off()
         lift_up.on()
+        time.sleep(LIFT_PULSE_SEC)
+        lift_up.off()
     elif state == "down":
         lift_up.off()
         lift_down.on()
+        time.sleep(LIFT_PULSE_SEC)
+        lift_down.off()
     else:
         lift_up.off()
         lift_down.off()
-    lift_state = state
+    lift_state = "stop" if state == "stop" else state
 
 app = FastAPI(title="Pump Relay Control")
 app.mount("/static", StaticFiles(directory="static"), name="static")
