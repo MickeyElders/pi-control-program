@@ -407,23 +407,15 @@ def set_lift_state(state: str) -> None:
     if state == "up":
         if lift_state == "down":
             raise ValueError("Lift is moving down.")
-        if lift_state == "up":
-            lift_up.off()
-            lift_state = "stop"
-        else:
-            lift_down.off()
-            lift_up.on()
-            lift_state = "up"
+        lift_down.off()
+        lift_up.on()
+        lift_state = "up"
     elif state == "down":
         if lift_state == "up":
             raise ValueError("Lift is moving up.")
-        if lift_state == "down":
-            lift_down.off()
-            lift_state = "stop"
-        else:
-            lift_up.off()
-            lift_down.on()
-            lift_state = "down"
+        lift_up.off()
+        lift_down.on()
+        lift_state = "down"
     else:
         lift_up.off()
         lift_down.off()

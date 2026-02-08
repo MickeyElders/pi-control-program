@@ -513,14 +513,14 @@
           hint.textContent = "请先停止下降";
           return;
         }
-        setLift("up");
+        setLift(liftState === "up" ? "stop" : "up");
       });
       liftDown.addEventListener("click", () => {
         if (liftState === "up") {
           hint.textContent = "请先停止升高";
           return;
         }
-        setLift("down");
+        setLift(liftState === "down" ? "stop" : "down");
       });
       setLiftState("stop");
 
