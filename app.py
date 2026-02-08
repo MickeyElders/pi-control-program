@@ -402,24 +402,30 @@ def build_tank_colors(soak_temp: Optional[float], soak_ph: Optional[float]) -> d
 
 def set_lift_state(state: str) -> None:
     global lift_state
-    if state not in {"up", "down", "stop"}:
+    if state not in {"up", "down"}:
         raise ValueError("Invalid lift state.")
     if state == "up":
         if lift_state == "down":
             raise ValueError("Lift is moving down.")
+        if lift_state == "up":
+            lift_up.off()
+            lift_down.off()
+            lift_state = "stop"
+            return
         lift_down.off()
         lift_up.on()
         lift_state = "up"
-    elif state == "down":
-        if lift_state == "up":
-            raise ValueError("Lift is moving up.")
-        lift_up.off()
-        lift_down.on()
-        lift_state = "down"
-    else:
+        return
+    if lift_state == "up":
+        raise ValueError("Lift is moving up.")
+    if lift_state == "down":
         lift_up.off()
         lift_down.off()
         lift_state = "stop"
+        return
+    lift_up.off()
+    lift_down.on()
+    lift_state = "down"
 
 app = FastAPI(title="Pump Relay Control")
 app.mount("/static", StaticFiles(directory="static"), name="static")
