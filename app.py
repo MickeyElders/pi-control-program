@@ -193,7 +193,6 @@ PIN_VALVE_HEAT = 18
 PIN_HEATER = 27
 PIN_LIFT_UP = 22
 PIN_LIFT_DOWN = 24
-LIFT_PULSE_SEC = 0.3
 
 PH_METER_ENABLED = os.getenv("PH_METER_ENABLED", "1").lower() in {"1", "true", "yes", "on"}
 PH_METER_PORT = os.getenv("PH_METER_PORT", "/dev/ttyUSB0")
@@ -401,21 +400,6 @@ def build_tank_colors(soak_temp: Optional[float], soak_ph: Optional[float]) -> d
     }
 
 
-def pulse_lift(direction: str) -> None:
-    if direction == "up":
-        lift_down.off()
-        lift_up.on()
-        time.sleep(LIFT_PULSE_SEC)
-        lift_up.off()
-    elif direction == "down":
-        lift_up.off()
-        lift_down.on()
-        time.sleep(LIFT_PULSE_SEC)
-        lift_down.off()
-    else:
-        raise ValueError("Invalid lift direction.")
-
-
 def set_lift_state(state: str) -> None:
     global lift_state
     if state not in {"up", "down", "stop"}:
@@ -424,25 +408,25 @@ def set_lift_state(state: str) -> None:
         if lift_state == "down":
             raise ValueError("Lift is moving down.")
         if lift_state == "up":
-            pulse_lift("up")
+            lift_up.off()
             lift_state = "stop"
         else:
-            pulse_lift("up")
+            lift_down.off()
+            lift_up.on()
             lift_state = "up"
     elif state == "down":
         if lift_state == "up":
             raise ValueError("Lift is moving up.")
         if lift_state == "down":
-            pulse_lift("down")
+            lift_down.off()
             lift_state = "stop"
         else:
-            pulse_lift("down")
+            lift_up.off()
+            lift_down.on()
             lift_state = "down"
     else:
-        if lift_state == "up":
-            pulse_lift("up")
-        elif lift_state == "down":
-            pulse_lift("down")
+        lift_up.off()
+        lift_down.off()
         lift_state = "stop"
 
 app = FastAPI(title="Pump Relay Control")
