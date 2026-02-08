@@ -306,8 +306,8 @@ lift_devices: Optional[Dict[str, object]] = None
 lift_state = "stop"
 if len(lift_pins) >= 2:
     lift_devices = {
-        "up": create_output_device(lift_pins[0], active_low=ACTIVE_LOW, initial_value=False),
-        "down": create_output_device(lift_pins[1], active_low=ACTIVE_LOW, initial_value=False),
+        "up": create_output_device(lift_pins[0], active_low=False, initial_value=False),
+        "down": create_output_device(lift_pins[1], active_low=False, initial_value=False),
     }
     for dev in lift_devices.values():
         dev.off()
