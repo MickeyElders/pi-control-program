@@ -185,7 +185,7 @@ PIN_VALVE_FRESH = 17
 PIN_VALVE_HEAT = 18
 PIN_HEATER = 27
 PIN_LIFT_UP = 22
-PIN_LIFT_DOWN = 23
+PIN_LIFT_DOWN = 24
 
 
 def clamp_level(value: int) -> int:
