@@ -34,6 +34,14 @@ Open `http://<raspberrypi-ip>:8000`.
 - `GPIO_BACKEND` (default auto): `jetson`, `rpigpio`, or `gpiozero`.
 - `PIN_MODE` (default `BOARD`): pin numbering for Jetson/RPi.GPIO (`BOARD` or `BCM`).
 - `GPIOZERO_PIN_FACTORY` (default `lgpio`): GPIO backend (`lgpio` or `rpi`).
+- PH meter (Modbus RTU over USB / CH340):
+  - `PH_METER_ENABLED` (default `1`)
+  - `PH_METER_PORT` (default `/dev/ttyUSB0`)
+  - `PH_METER_ADDR` (default `1`)
+  - `PH_METER_BAUD` (default `9600`)
+  - `PH_METER_TIMEOUT` (default `0.8`)
+  - `PH_POLL_INTERVAL` (default `2.0`)
+  - `PH_STALE_SEC` (default `10`)
 
 ## Systemd + Make automation
 Install and start the service (will check and install system deps):

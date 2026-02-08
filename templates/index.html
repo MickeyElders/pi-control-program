@@ -62,8 +62,8 @@
               </div>
               <div class="tank-percent">{{ tank_levels.soak }}%</div>
               <div class="tank-metrics">
-                <span>温度 {{ "%.1f"|format(tank_temps.soak) }}°C</span>
-                <span>pH {{ "%.2f"|format(tank_phs.soak) }}</span>
+                <span>温度 <span data-role="soak-temp">{{ "%.1f"|format(soak_temp) if soak_temp is not none else "--" }}</span>°C</span>
+                <span>pH <span data-role="soak-ph">{{ "%.2f"|format(soak_ph) if soak_ph is not none else "--" }}</span></span>
               </div>
               <div class="tank-liquid">
                 <div class="surface"></div>
@@ -232,11 +232,26 @@
       const debugToggle = document.getElementById("debug-toggle");
       const heaterToggle = document.getElementById("heater-toggle");
       const heaterText = document.querySelector('[data-role="heater-text"]');
+      const soakTempEl = document.querySelector('[data-role="soak-temp"]');
+      const soakPhEl = document.querySelector('[data-role="soak-ph"]');
+      const soakTank = document.querySelector(".tank.soak");
 
       function setPipeFlow(index, on) {
         const pipe = pipes.get(String(index));
         if (pipe) {
           pipe.classList.toggle("on", on);
+        }
+      }
+
+      function updateSoakMetrics(temp, ph, color) {
+        if (soakTempEl) {
+          soakTempEl.textContent = Number.isFinite(temp) ? temp.toFixed(1) : "--";
+        }
+        if (soakPhEl) {
+          soakPhEl.textContent = Number.isFinite(ph) ? ph.toFixed(2) : "--";
+        }
+        if (soakTank && Array.isArray(color) && color.length === 3) {
+          soakTank.style.setProperty("--liquid-base", `${color[0]} ${color[1]} ${color[2]}`);
         }
       }
 
@@ -386,6 +401,9 @@
             if (data.lift.state) {
               setLiftState(data.lift.state);
             }
+          }
+          if (data.tank && data.tank.soak) {
+            updateSoakMetrics(data.tank.soak.temp, data.tank.soak.ph, data.tank.soak.color);
           }
           updateValveFlows(pump3Card?.dataset.on === "1");
           hint.textContent = "Last update: " + new Date().toLocaleTimeString();

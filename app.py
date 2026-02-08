@@ -1,6 +1,7 @@
 import os
+import threading
 import time
-from typing import List
+from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
@@ -22,6 +23,11 @@ try:
     from gpiozero import DigitalOutputDevice as GpiozeroDigitalOutputDevice
 except ImportError:
     GpiozeroDigitalOutputDevice = None
+
+try:
+    import serial
+except ImportError:
+    serial = None
 
 GPIO_BACKEND = os.getenv("GPIO_BACKEND", "auto").lower()
 PIN_MODE = os.getenv("PIN_MODE", "BOARD").upper()
@@ -189,6 +195,14 @@ PIN_LIFT_UP = 22
 PIN_LIFT_DOWN = 24
 LIFT_PULSE_SEC = 0.3
 
+PH_METER_ENABLED = os.getenv("PH_METER_ENABLED", "1").lower() in {"1", "true", "yes", "on"}
+PH_METER_PORT = os.getenv("PH_METER_PORT", "/dev/ttyUSB0")
+PH_METER_ADDR = int(os.getenv("PH_METER_ADDR", "1"))
+PH_METER_BAUD = int(os.getenv("PH_METER_BAUD", "9600"))
+PH_METER_TIMEOUT = float(os.getenv("PH_METER_TIMEOUT", "0.8"))
+PH_POLL_INTERVAL = float(os.getenv("PH_POLL_INTERVAL", "2.0"))
+PH_STALE_SEC = float(os.getenv("PH_STALE_SEC", "10"))
+
 
 def clamp_level(value: int) -> int:
     return max(0, min(100, value))
@@ -263,6 +277,38 @@ def parse_float_values(value: str, count: int, defaults: List[float]) -> List[fl
     return values[:count]
 
 
+def crc16_modbus(data: bytes) -> int:
+    crc = 0xFFFF
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            if crc & 1:
+                crc = (crc >> 1) ^ 0xA001
+            else:
+                crc >>= 1
+    return crc & 0xFFFF
+
+
+def build_modbus_request(addr: int, start: int = 0, count: int = 2) -> bytes:
+    payload = bytes([addr, 0x03, (start >> 8) & 0xFF, start & 0xFF, (count >> 8) & 0xFF, count & 0xFF])
+    crc = crc16_modbus(payload)
+    return payload + bytes([crc & 0xFF, (crc >> 8) & 0xFF])
+
+
+def parse_modbus_response(resp: bytes, addr: int) -> Optional[tuple[float, float]]:
+    if len(resp) != 9:
+        return None
+    if resp[0] != addr or resp[1] != 0x03 or resp[2] != 0x04:
+        return None
+    crc_expected = crc16_modbus(resp[:-2])
+    crc_actual = resp[-2] | (resp[-1] << 8)
+    if crc_expected != crc_actual:
+        return None
+    ph_raw = (resp[3] << 8) | resp[4]
+    temp_raw = (resp[5] << 8) | resp[6]
+    return ph_raw / 100.0, temp_raw / 10.0
+
+
 pump1 = create_output_device(PIN_PUMP1, active_low=ACTIVE_LOW, initial_value=False)
 pump2 = create_output_device(PIN_PUMP2, active_low=ACTIVE_LOW, initial_value=False)
 pump3 = create_output_device(PIN_PUMP3, active_low=ACTIVE_LOW, initial_value=False)
@@ -294,13 +340,65 @@ tank_temps = {"soak": tank_temps_list[0], "fresh": tank_temps_list[1], "heat": t
 ph_env = os.getenv("TANK_PHS", "")
 tank_phs_list = parse_float_values(ph_env, 3, DEFAULT_PHS) if ph_env else DEFAULT_PHS[:]
 tank_phs = {"soak": tank_phs_list[0], "fresh": tank_phs_list[1], "heat": tank_phs_list[2]}
-tank_colors = {
-    "soak": color_for_ph_temp(tank_phs["soak"], tank_temps["soak"]),
-    "fresh": color_for_ph_temp(tank_phs["fresh"], tank_temps["fresh"]),
-    "heat": color_for_ph_temp(tank_phs["heat"], tank_temps["heat"]),
-}
 
 auto_switches = {"fresh": False, "heat": False}
+
+soak_lock = threading.Lock()
+soak_ph_live: Optional[float] = None
+soak_temp_live: Optional[float] = None
+soak_last_good = 0.0
+
+
+def ph_reader_loop() -> None:
+    if not serial or not PH_METER_ENABLED:
+        return
+    global soak_ph_live, soak_temp_live, soak_last_good
+    while True:
+        try:
+            with serial.Serial(
+                PH_METER_PORT,
+                PH_METER_BAUD,
+                timeout=PH_METER_TIMEOUT,
+            ) as ser:
+                while True:
+                    request = build_modbus_request(PH_METER_ADDR, 0, 2)
+                    try:
+                        ser.reset_input_buffer()
+                    except Exception:
+                        pass
+                    ser.write(request)
+                    ser.flush()
+                    response = ser.read(9)
+                    parsed = parse_modbus_response(response, PH_METER_ADDR)
+                    if parsed:
+                        ph_value, temp_value = parsed
+                        with soak_lock:
+                            soak_ph_live = round(ph_value, 2)
+                            soak_temp_live = round(temp_value, 1)
+                            soak_last_good = time.time()
+                    time.sleep(PH_POLL_INTERVAL)
+        except Exception:
+            time.sleep(max(1.0, PH_POLL_INTERVAL))
+
+
+def get_soak_reading() -> tuple[Optional[float], Optional[float]]:
+    with soak_lock:
+        ph_value = soak_ph_live
+        temp_value = soak_temp_live
+        last_good = soak_last_good
+    if last_good and (time.time() - last_good) <= PH_STALE_SEC:
+        return temp_value, ph_value
+    return None, None
+
+
+def build_tank_colors(soak_temp: Optional[float], soak_ph: Optional[float]) -> dict:
+    soak_temp_color = soak_temp if soak_temp is not None else tank_temps["soak"]
+    soak_ph_color = soak_ph if soak_ph is not None else tank_phs["soak"]
+    return {
+        "soak": color_for_ph_temp(soak_ph_color, soak_temp_color),
+        "fresh": color_for_ph_temp(tank_phs["fresh"], tank_temps["fresh"]),
+        "heat": color_for_ph_temp(tank_phs["heat"], tank_temps["heat"]),
+    }
 
 
 def pulse_lift(direction: str) -> None:
@@ -352,6 +450,13 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 
+@app.on_event("startup")
+def start_ph_reader() -> None:
+    if PH_METER_ENABLED and serial:
+        thread = threading.Thread(target=ph_reader_loop, daemon=True)
+        thread.start()
+
+
 class RelayCommand(BaseModel):
     index: int
     on: bool
@@ -372,6 +477,8 @@ class LiftCommand(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
+    soak_temp, soak_ph = get_soak_reading()
+    tank_colors = build_tank_colors(soak_temp, soak_ph)
     pumps = [
         {"index": 0, "pin": PIN_PUMP1, "on": pump1.is_active},
         {"index": 1, "pin": PIN_PUMP2, "on": pump2.is_active},
@@ -385,6 +492,8 @@ def index(request: Request) -> HTMLResponse:
             "tank_levels": tank_levels,
             "tank_temps": tank_temps,
             "tank_phs": tank_phs,
+            "soak_temp": soak_temp,
+            "soak_ph": soak_ph,
             "tank_colors": tank_colors,
             "auto_switches": auto_switches,
             "heater": {"configured": True, "on": heater.is_active},
@@ -395,6 +504,8 @@ def index(request: Request) -> HTMLResponse:
 @app.get("/api/status")
 def api_status() -> dict:
     auto_status = {"fresh": auto_switches["fresh"], "heat": auto_switches["heat"], "configured": True}
+    soak_temp, soak_ph = get_soak_reading()
+    tank_colors = build_tank_colors(soak_temp, soak_ph)
     return {
         "relays": [
             {"index": 0, "pin": PIN_PUMP1, "on": pump1.is_active},
@@ -404,6 +515,13 @@ def api_status() -> dict:
         "auto": auto_status,
         "lift": {"configured": True, "state": lift_state},
         "heater": {"configured": True, "on": heater.is_active},
+        "tank": {
+            "soak": {
+                "temp": soak_temp,
+                "ph": soak_ph,
+                "color": list(tank_colors["soak"]),
+            }
+        },
     }
 
 
