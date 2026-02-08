@@ -233,50 +233,6 @@
       const heaterToggle = document.getElementById("heater-toggle");
       const heaterText = document.querySelector('[data-role="heater-text"]');
 
-      function isMobileDevice() {
-        const ua = navigator.userAgent || "";
-        const uaData = navigator.userAgentData;
-        if (uaData && typeof uaData.mobile === "boolean") {
-          return uaData.mobile;
-        }
-        return /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(ua);
-      }
-
-      function updateViewportClass() {
-        document.body.classList.toggle("is-mobile", isMobileDevice());
-      }
-
-      function updatePanelScale() {
-        const root = document.querySelector(".scale-root");
-        const wrap = document.querySelector(".scale-wrap");
-        if (!root || !wrap) return;
-        if (!document.body.classList.contains("is-mobile")) {
-          root.style.removeProperty("--scale");
-          root.style.removeProperty("--stretch");
-          wrap.style.removeProperty("height");
-          return;
-        }
-        requestAnimationFrame(() => {
-          const baseWidth = 920;
-          const baseHeight = root.scrollHeight || root.offsetHeight;
-          if (!baseHeight) return;
-          const viewportHeight = window.visualViewport?.height || window.innerHeight;
-          const scaleX = Math.min(1, window.innerWidth / baseWidth);
-          const scale = scaleX;
-          root.style.setProperty("--scale", scale.toFixed(3));
-
-          const scaledHeight = baseHeight * scale;
-          const stretch = Math.min(1.2, Math.max(1, viewportHeight / scaledHeight));
-          root.style.setProperty("--stretch", stretch.toFixed(3));
-          wrap.style.height = `${scaledHeight * stretch}px`;
-        });
-      }
-
-      window.addEventListener("load", () => {
-        updateViewportClass();
-        updatePanelScale();
-      }, { once: true });
-
       function setPipeFlow(index, on) {
         const pipe = pipes.get(String(index));
         if (pipe) {
