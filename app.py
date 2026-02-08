@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Optional
+from typing import List
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
@@ -173,24 +173,19 @@ def create_output_device(pin: int, active_low: bool, initial_value: bool = False
     return StubOutputDevice(pin, active_low=active_low, initial_value=initial_value)
 
 
-DEFAULT_PINS = "27,22,23"
 DEFAULT_LEVELS = [72, 58, 46]
 DEFAULT_TEMPS = [32.5, 22.0, 45.0]
 DEFAULT_PHS = [6.8, 7.2, 6.5]
 ACTIVE_LOW = os.getenv("RELAY_ACTIVE_LOW", "1").lower() in {"1", "true", "yes", "on"}
-PIN_ORDER_NOTE = (
-    "RELAY_PINS order: pump1,pump2,pump3,valve1,valve2,heater,lift_up,lift_down"
-)
 
-
-def parse_pins(value: str) -> List[int]:
-    pins: List[int] = []
-    for part in value.split(","):
-        part = part.strip()
-        if not part:
-            continue
-        pins.append(int(part))
-    return pins
+PIN_PUMP1 = 4
+PIN_PUMP2 = 14
+PIN_PUMP3 = 15
+PIN_VALVE_FRESH = 17
+PIN_VALVE_HEAT = 18
+PIN_HEATER = 27
+PIN_LIFT_UP = 22
+PIN_LIFT_DOWN = 23
 
 
 def clamp_level(value: int) -> int:
@@ -266,58 +261,25 @@ def parse_float_values(value: str, count: int, defaults: List[float]) -> List[fl
     return values[:count]
 
 
-pins_env = os.getenv("RELAY_PINS")
-if pins_env:
-    all_pins = parse_pins(pins_env)
-else:
-    relay_gpio = os.getenv("RELAY_GPIO")
-    if relay_gpio:
-        all_pins = [int(relay_gpio)]
-    else:
-        all_pins = parse_pins(DEFAULT_PINS)
+pump1 = create_output_device(PIN_PUMP1, active_low=ACTIVE_LOW, initial_value=False)
+pump2 = create_output_device(PIN_PUMP2, active_low=ACTIVE_LOW, initial_value=False)
+pump3 = create_output_device(PIN_PUMP3, active_low=ACTIVE_LOW, initial_value=False)
+for pump in (pump1, pump2, pump3):
+    pump.off()
 
-PINS = all_pins[:3]
-if not PINS:
-    raise RuntimeError("No relay pins configured. Set RELAY_PINS or RELAY_GPIO.")
+valve_fresh = create_output_device(PIN_VALVE_FRESH, active_low=ACTIVE_LOW, initial_value=False)
+valve_heat = create_output_device(PIN_VALVE_HEAT, active_low=ACTIVE_LOW, initial_value=False)
+valve_fresh.off()
+valve_heat.off()
 
-relays = [create_output_device(pin, active_low=ACTIVE_LOW, initial_value=False) for pin in PINS]
-for relay in relays:
-    relay.off()
-
-valve_pins: List[int] = []
-if len(all_pins) >= 5:
-    valve_pins = all_pins[3:5]
-
-valves: Optional[Dict[str, object]] = None
-if len(valve_pins) >= 2:
-    valves = {
-        "fresh": create_output_device(valve_pins[0], active_low=ACTIVE_LOW, initial_value=False),
-        "heat": create_output_device(valve_pins[1], active_low=ACTIVE_LOW, initial_value=False),
-    }
-    for valve in valves.values():
-        valve.off()
-
-lift_pins: List[int] = []
-if len(all_pins) >= 8:
-    lift_pins = all_pins[6:8]
-
-lift_devices: Optional[Dict[str, object]] = None
+lift_up = create_output_device(PIN_LIFT_UP, active_low=ACTIVE_LOW, initial_value=False)
+lift_down = create_output_device(PIN_LIFT_DOWN, active_low=ACTIVE_LOW, initial_value=False)
+lift_up.off()
+lift_down.off()
 lift_state = "stop"
-if len(lift_pins) >= 2:
-    lift_devices = {
-        "up": create_output_device(lift_pins[0], active_low=ACTIVE_LOW, initial_value=False),
-        "down": create_output_device(lift_pins[1], active_low=ACTIVE_LOW, initial_value=False),
-    }
-    for dev in lift_devices.values():
-        dev.off()
 
-heater = None
-heater_pin = None
-if len(all_pins) >= 6:
-    heater_pin = all_pins[5]
-if heater_pin is not None:
-    heater = create_output_device(heater_pin, active_low=ACTIVE_LOW, initial_value=False)
-    heater.off()
+heater = create_output_device(PIN_HEATER, active_low=ACTIVE_LOW, initial_value=False)
+heater.off()
 
 levels_env = os.getenv("TANK_LEVELS", "")
 tank_levels_list = parse_levels(levels_env, 3, DEFAULT_LEVELS) if levels_env else DEFAULT_LEVELS[:]
@@ -343,18 +305,15 @@ def set_lift_state(state: str) -> None:
     global lift_state
     if state not in {"up", "down", "stop"}:
         raise ValueError("Invalid lift state.")
-    if not lift_devices:
-        lift_state = state
-        return
     if state == "up":
-        lift_devices["down"].off()
-        lift_devices["up"].on()
+        lift_down.off()
+        lift_up.on()
     elif state == "down":
-        lift_devices["up"].off()
-        lift_devices["down"].on()
+        lift_up.off()
+        lift_down.on()
     else:
-        lift_devices["up"].off()
-        lift_devices["down"].off()
+        lift_up.off()
+        lift_down.off()
     lift_state = state
 
 app = FastAPI(title="Pump Relay Control")
@@ -383,70 +342,78 @@ class LiftCommand(BaseModel):
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
     pumps = [
-        {"index": idx, "pin": pin, "on": relays[idx].is_active} for idx, pin in enumerate(PINS)
+        {"index": 0, "pin": PIN_PUMP1, "on": pump1.is_active},
+        {"index": 1, "pin": PIN_PUMP2, "on": pump2.is_active},
+        {"index": 2, "pin": PIN_PUMP3, "on": pump3.is_active},
     ]
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
             "pumps": pumps,
-            "pins": PINS,
-            "active_low": ACTIVE_LOW,
             "tank_levels": tank_levels,
             "tank_temps": tank_temps,
             "tank_phs": tank_phs,
             "tank_colors": tank_colors,
             "auto_switches": auto_switches,
-            "heater": {"configured": heater is not None, "on": heater.is_active if heater else False},
+            "heater": {"configured": True, "on": heater.is_active},
         },
     )
 
 
 @app.get("/api/status")
 def api_status() -> dict:
-    auto_status = {"fresh": auto_switches["fresh"], "heat": auto_switches["heat"], "configured": valves is not None}
+    auto_status = {"fresh": auto_switches["fresh"], "heat": auto_switches["heat"], "configured": True}
     return {
         "relays": [
-            {"index": idx, "pin": pin, "on": relays[idx].is_active}
-            for idx, pin in enumerate(PINS)
+            {"index": 0, "pin": PIN_PUMP1, "on": pump1.is_active},
+            {"index": 1, "pin": PIN_PUMP2, "on": pump2.is_active},
+            {"index": 2, "pin": PIN_PUMP3, "on": pump3.is_active},
         ],
         "auto": auto_status,
-        "lift": {"configured": lift_devices is not None, "state": lift_state},
-        "heater": {"configured": heater is not None, "on": heater.is_active if heater else False},
+        "lift": {"configured": True, "state": lift_state},
+        "heater": {"configured": True, "on": heater.is_active},
     }
 
 
 @app.post("/api/relay")
 def api_relay(cmd: RelayCommand) -> dict:
-    if cmd.index < 0 or cmd.index >= len(relays):
+    if cmd.index == 0:
+        target = pump1
+    elif cmd.index == 1:
+        target = pump2
+    elif cmd.index == 2:
+        target = pump3
+    else:
         raise HTTPException(status_code=400, detail="Invalid relay index.")
     if cmd.on:
-        relays[cmd.index].on()
+        target.on()
     else:
-        relays[cmd.index].off()
-    return {"on": relays[cmd.index].is_active}
+        target.off()
+    return {"on": target.is_active}
 
 
 @app.post("/api/auto")
 def api_auto(cmd: AutoSwitchCommand) -> dict:
-    if valves is None:
-        raise HTTPException(status_code=400, detail="Valves not configured.")
     if cmd.which not in auto_switches:
         raise HTTPException(status_code=400, detail="Invalid auto switch.")
     auto_switches[cmd.which] = bool(cmd.on)
-    if valves:
+    if cmd.which == "fresh":
         if cmd.on:
-            valves[cmd.which].on()
+            valve_fresh.on()
         else:
-            valves[cmd.which].off()
+            valve_fresh.off()
+    else:
+        if cmd.on:
+            valve_heat.on()
+        else:
+            valve_heat.off()
 
-    return {"auto": {"fresh": auto_switches["fresh"], "heat": auto_switches["heat"], "configured": valves is not None}}
+    return {"auto": {"fresh": auto_switches["fresh"], "heat": auto_switches["heat"], "configured": True}}
 
 
 @app.post("/api/lift")
 def api_lift(cmd: LiftCommand) -> dict:
-    if lift_devices is None:
-        raise HTTPException(status_code=400, detail="Lift not configured.")
     try:
         set_lift_state(cmd.state)
     except ValueError as exc:
@@ -456,8 +423,6 @@ def api_lift(cmd: LiftCommand) -> dict:
 
 @app.post("/api/heater")
 def api_heater(cmd: HeaterCommand) -> dict:
-    if heater is None:
-        raise HTTPException(status_code=400, detail="Heater not configured.")
     if cmd.on:
         heater.on()
     else:
