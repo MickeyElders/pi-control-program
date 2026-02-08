@@ -222,6 +222,11 @@ body::after {
   width: 96px;
 }
 
+.lift-controls .btn.active {
+  box-shadow: 0 12px 24px rgba(10, 16, 24, 0.2);
+  transform: translateY(-1px);
+}
+
 .lift-up {
   background: linear-gradient(135deg, rgba(47, 159, 122, 0.95), rgba(83, 208, 170, 0.95));
   color: #f6fffb;

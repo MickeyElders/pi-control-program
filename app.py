@@ -303,24 +303,49 @@ tank_colors = {
 auto_switches = {"fresh": False, "heat": False}
 
 
-def set_lift_state(state: str) -> None:
-    global lift_state
-    if state not in {"up", "down", "stop"}:
-        raise ValueError("Invalid lift state.")
-    if state == "up":
+def pulse_lift(direction: str) -> None:
+    if direction == "up":
         lift_down.off()
         lift_up.on()
         time.sleep(LIFT_PULSE_SEC)
         lift_up.off()
-    elif state == "down":
+    elif direction == "down":
         lift_up.off()
         lift_down.on()
         time.sleep(LIFT_PULSE_SEC)
         lift_down.off()
     else:
-        lift_up.off()
-        lift_down.off()
-    lift_state = "stop" if state == "stop" else state
+        raise ValueError("Invalid lift direction.")
+
+
+def set_lift_state(state: str) -> None:
+    global lift_state
+    if state not in {"up", "down", "stop"}:
+        raise ValueError("Invalid lift state.")
+    if state == "up":
+        if lift_state == "down":
+            raise ValueError("Lift is moving down.")
+        if lift_state == "up":
+            pulse_lift("up")
+            lift_state = "stop"
+        else:
+            pulse_lift("up")
+            lift_state = "up"
+    elif state == "down":
+        if lift_state == "up":
+            raise ValueError("Lift is moving up.")
+        if lift_state == "down":
+            pulse_lift("down")
+            lift_state = "stop"
+        else:
+            pulse_lift("down")
+            lift_state = "down"
+    else:
+        if lift_state == "up":
+            pulse_lift("up")
+        elif lift_state == "down":
+            pulse_lift("down")
+        lift_state = "stop"
 
 app = FastAPI(title="Pump Relay Control")
 app.mount("/static", StaticFiles(directory="static"), name="static")

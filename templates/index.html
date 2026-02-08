@@ -48,7 +48,6 @@
             <div class="lift-controls">
               <button class="btn lift-up" id="lift-up" type="button">升高</button>
               <button class="btn lift-down" id="lift-down" type="button">下降</button>
-              <button class="btn lift-stop" id="lift-stop" type="button">停止</button>
             </div>
           </div>
           <div class="tank soak" style="--level: {{ tank_levels.soak }}; --liquid-base: {{ tank_colors.soak[0] }} {{ tank_colors.soak[1] }} {{ tank_colors.soak[2] }}">
@@ -230,7 +229,6 @@
       const liftStatus = document.getElementById("lift-status");
       const liftUp = document.getElementById("lift-up");
       const liftDown = document.getElementById("lift-down");
-      const liftStop = document.getElementById("lift-stop");
       const debugToggle = document.getElementById("debug-toggle");
       const heaterToggle = document.getElementById("heater-toggle");
       const heaterText = document.querySelector('[data-role="heater-text"]');
@@ -306,21 +304,42 @@
         }
       }
 
+      let liftState = "stop";
+
       function setLiftState(state) {
+        liftState = state;
         liftIndicator.classList.toggle("up", state === "up");
         liftIndicator.classList.toggle("down", state === "down");
         liftIndicator.classList.toggle("idle", state === "stop");
         if (state === "up") {
           liftStatus.textContent = "正在抬起";
+          liftUp.classList.add("active");
+          liftDown.classList.remove("active");
+          liftUp.textContent = "停止升高";
+          liftDown.textContent = "下降";
+          liftUp.disabled = false;
+          liftDown.disabled = true;
         } else if (state === "down") {
           liftStatus.textContent = "正在降低";
+          liftDown.classList.add("active");
+          liftUp.classList.remove("active");
+          liftDown.textContent = "停止下降";
+          liftUp.textContent = "升高";
+          liftDown.disabled = false;
+          liftUp.disabled = true;
         } else {
           liftStatus.textContent = "已停止";
+          liftUp.classList.remove("active");
+          liftDown.classList.remove("active");
+          liftUp.textContent = "升高";
+          liftDown.textContent = "下降";
+          liftUp.disabled = false;
+          liftDown.disabled = false;
         }
       }
 
       function setLiftButtonsDisabled(disabled) {
-        [liftUp, liftDown, liftStop].forEach((btn) => {
+        [liftUp, liftDown].forEach((btn) => {
           if (btn) btn.disabled = disabled;
         });
       }
@@ -475,6 +494,10 @@
             body: JSON.stringify({ state }),
           });
           const data = await res.json();
+          if (!res.ok) {
+            hint.textContent = data?.detail || "指令失败。";
+            return;
+          }
           if (data.state) {
             setLiftState(data.state);
           } else {
@@ -484,7 +507,7 @@
         } catch (err) {
           hint.textContent = "指令失败。";
         } finally {
-          setLiftButtonsDisabled(false);
+          setLiftState(liftState);
         }
       }
 
@@ -511,9 +534,20 @@
       }
       updateValveFlows(pump3Card?.dataset.on === "1");
 
-      liftUp.addEventListener("click", () => setLift("up"));
-      liftDown.addEventListener("click", () => setLift("down"));
-      liftStop.addEventListener("click", () => setLift("stop"));
+      liftUp.addEventListener("click", () => {
+        if (liftState === "down") {
+          hint.textContent = "请先停止下降";
+          return;
+        }
+        setLift("up");
+      });
+      liftDown.addEventListener("click", () => {
+        if (liftState === "up") {
+          hint.textContent = "请先停止升高";
+          return;
+        }
+        setLift("down");
+      });
       setLiftState("stop");
 
       debugToggle.addEventListener("click", () => {
