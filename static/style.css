@@ -104,40 +104,67 @@ body::after {
   animation: rise 650ms ease-out;
 }
 
-.panel::before {
-  content: "工业风格组态";
+.panel::after {
+  content: "";
   position: absolute;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 4px 18px;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(80, 150, 210, 0.06) 0 1px,
+      transparent 1px 80px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(80, 150, 210, 0.04) 0 1px,
+      transparent 1px 120px
+    );
+  pointer-events: none;
+  opacity: 0.4;
+  z-index: 0;
+}
+
+.panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.panel-topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 14px;
+  margin: -18px auto 18px;
+}
+
+.panel-title {
+  padding: 6px 18px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.2em;
   color: #e7f7ff;
   background: linear-gradient(180deg, rgba(20, 36, 54, 0.95), rgba(10, 20, 34, 0.85));
   border: 1px solid rgba(98, 190, 255, 0.45);
   box-shadow: 0 0 18px rgba(52, 176, 255, 0.35);
   text-transform: uppercase;
-  pointer-events: none;
+  text-align: center;
+  white-space: nowrap;
 }
 
-.panel::after {
-  content: "";
-  position: absolute;
-  top: 30px;
-  left: 6%;
-  right: 6%;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(90, 190, 255, 0.55),
-    transparent
+.panel-stripe {
+  height: 6px;
+  border-radius: 999px;
+  background: repeating-linear-gradient(
+    135deg,
+    rgba(60, 200, 255, 0.7) 0 10px,
+    rgba(20, 40, 60, 0.8) 10px 18px
   );
-  opacity: 0.7;
-  pointer-events: none;
+  box-shadow: 0 0 12px rgba(60, 200, 255, 0.4);
+}
+
+.panel-stripe.right {
+  justify-self: end;
 }
 
 .tank-row {
@@ -171,12 +198,11 @@ body::after {
   gap: 10px;
   align-content: start;
   height: var(--tank-height);
-  padding: 14px 12px;
+  padding: 12px 4px;
   justify-items: start;
-  background: rgba(10, 18, 28, 0.65);
-  border: 1px solid rgba(98, 190, 255, 0.25);
-  border-radius: 16px;
-  box-shadow: inset 0 0 0 1px rgba(30, 80, 120, 0.2);
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .lift-rail {
@@ -252,13 +278,14 @@ body::after {
 .lift-status {
   font-size: 12px;
   font-weight: 700;
-  color: #e7f3ff;
-  background: rgba(10, 22, 34, 0.7);
+  color: #14243a;
+  background: rgba(245, 250, 255, 0.95);
   border-radius: 999px;
   padding: 6px 10px;
-  border: 1px solid rgba(98, 190, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.9);
   width: 96px;
   text-align: center;
+  box-shadow: 0 10px 18px rgba(2, 8, 14, 0.3);
 }
 
 .lift-controls {
@@ -373,6 +400,10 @@ body::after {
   opacity: 1;
 }
 
+.pipe.on {
+  box-shadow: inset 0 0 0 1px rgba(120, 210, 255, 0.55), 0 0 16px rgba(40, 170, 255, 0.35);
+}
+
 .pipe.to-right.on .pipe-flow {
   animation: pipe-right 0.8s linear infinite;
 }
@@ -391,6 +422,31 @@ body::after {
     0 18px 34px rgba(2, 8, 14, 0.45),
     0 0 22px rgba(40, 160, 255, 0.2);
   overflow: hidden;
+}
+
+.tank-body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 8%;
+  width: 24%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.35),
+    rgba(255, 255, 255, 0.05)
+  );
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.tank-body::after {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border-radius: 16px 16px 22px 22px;
+  border: 1px solid rgba(200, 230, 255, 0.25);
+  pointer-events: none;
 }
 
 .tank.soak .tank-body {
@@ -461,6 +517,7 @@ body::after {
   border-radius: 999px;
   padding: 4px 10px;
   border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 16px rgba(2, 8, 14, 0.35);
 }
 
 .tank-metrics {
@@ -477,6 +534,7 @@ body::after {
   padding: 6px 10px;
   border: 1px solid rgba(255, 255, 255, 0.9);
   z-index: 3;
+  box-shadow: 0 10px 18px rgba(2, 8, 14, 0.35);
 }
 
 .tank-liquid {
@@ -599,6 +657,19 @@ h2 {
   grid-template-rows: auto;
   gap: 18px;
   align-items: stretch;
+  margin-top: 6px;
+  padding-top: 18px;
+  position: relative;
+}
+
+.grid::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(80, 150, 210, 0.5), transparent);
 }
 
 .grid .pump-card[data-index="0"] {
@@ -634,6 +705,7 @@ h2 {
   border-color: rgba(60, 200, 255, 0.6);
   box-shadow: 0 18px 32px rgba(2, 8, 14, 0.55), 0 0 28px rgba(60, 200, 255, 0.25);
   transform: translateY(-2px);
+  animation: panel-glow 2.8s ease-in-out infinite;
 }
 
 .pump-card::before {
@@ -666,6 +738,24 @@ h2 {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   align-items: stretch;
+}
+
+.valve-panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(8, 16, 26, 0.85);
+  border: 1px solid rgba(98, 190, 255, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(30, 80, 120, 0.2);
+  min-width: 210px;
+}
+
+.valve-title {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 .pump-info-block {
@@ -1139,6 +1229,16 @@ h2 {
   }
 }
 
+@keyframes panel-glow {
+  0%,
+  100% {
+    box-shadow: 0 18px 32px rgba(2, 8, 14, 0.55), 0 0 22px rgba(60, 200, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 18px 32px rgba(2, 8, 14, 0.55), 0 0 32px rgba(60, 200, 255, 0.35);
+  }
+}
+
 @keyframes flow {
   0% {
     background-position: 0 0;
@@ -1200,6 +1300,15 @@ h2 {
 }
 
 @media (max-width: 899px) {
+  .panel-topbar {
+    grid-template-columns: 1fr;
+    margin-top: -10px;
+  }
+
+  .panel-stripe {
+    display: none;
+  }
+
   .tank-row {
     grid-template-columns: minmax(0, 1fr);
     row-gap: 20px;
