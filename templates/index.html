@@ -12,11 +12,6 @@
         <main class="stage">
           <div class="panel-wrap">
             <section class="panel" aria-live="polite">
-              <div class="panel-topbar" aria-hidden="true">
-                <span class="panel-stripe left"></span>
-                <span class="panel-title">工业风格组态</span>
-                <span class="panel-stripe right"></span>
-              </div>
         {% set routes = ["清水桶 → 浸泡桶", "加热桶 → 浸泡桶"] %}
         {% set pump3 = pumps[2] if pumps | length > 2 else None %}
         <header class="panel-header">
@@ -47,14 +42,16 @@
             </div>
           </div>
         </header>
-        <div class="tank-row">
-          <div class="lift-panel">
-            <div class="lift-status" id="lift-status">已停止</div>
-            <div class="lift-controls">
-              <button class="btn lift-up" id="lift-up" type="button">升高</button>
-              <button class="btn lift-down" id="lift-down" type="button">下降</button>
+        <div class="process-wrap">
+          <div class="process-3d" id="process-3d" aria-hidden="true"></div>
+          <div class="tank-row">
+            <div class="lift-panel">
+              <div class="lift-status" id="lift-status">已停止</div>
+              <div class="lift-controls">
+                <button class="btn lift-up" id="lift-up" type="button">升高</button>
+                <button class="btn lift-down" id="lift-down" type="button">下降</button>
+              </div>
             </div>
-          </div>
           <div class="tank soak" style="--level: {{ tank_levels.soak }}; --liquid-base: {{ tank_colors.soak[0] }} {{ tank_colors.soak[1] }} {{ tank_colors.soak[2] }}">
             <div class="tank-body">
               <div class="lift-rail" aria-hidden="true">
@@ -116,6 +113,7 @@
               </div>
               <div class="tank-label">加热桶</div>
             </div>
+          </div>
           </div>
         </div>
 
@@ -184,23 +182,20 @@
                   {% endif %}
                 </div>
               </div>
-              <div class="valve-panel">
-                <div class="valve-title">阀门模块</div>
-                <div class="auto-switches compact inline">
-                  <div class="auto-row" data-auto="fresh" data-on="{{ "1" if auto_switches.fresh else "0" }}">
-                    <div class="auto-text">
-                      <div class="auto-title">开关1</div>
-                      <div class="auto-sub">浸泡桶 → 清水桶</div>
-                    </div>
-                    <button class="btn toggle auto" data-auto="fresh" type="button"></button>
+              <div class="auto-switches compact inline">
+                <div class="auto-row" data-auto="fresh" data-on="{{ "1" if auto_switches.fresh else "0" }}">
+                  <div class="auto-text">
+                    <div class="auto-title">开关1</div>
+                    <div class="auto-sub">浸泡桶 → 清水桶</div>
                   </div>
-                  <div class="auto-row" data-auto="heat" data-on="{{ "1" if auto_switches.heat else "0" }}">
-                    <div class="auto-text">
-                      <div class="auto-title">开关2</div>
-                      <div class="auto-sub">浸泡桶 → 加热桶</div>
-                    </div>
-                    <button class="btn toggle auto" data-auto="heat" type="button"></button>
+                  <button class="btn toggle auto" data-auto="fresh" type="button"></button>
+                </div>
+                <div class="auto-row" data-auto="heat" data-on="{{ "1" if auto_switches.heat else "0" }}">
+                  <div class="auto-text">
+                    <div class="auto-title">开关2</div>
+                    <div class="auto-sub">浸泡桶 → 加热桶</div>
                   </div>
+                  <button class="btn toggle auto" data-auto="heat" type="button"></button>
                 </div>
               </div>
             </div>
@@ -218,6 +213,7 @@
       </div>
     </div>
 
+    <script type="module" src="static/process-3d.js"></script>
     <script>
       const pumpCards = Array.from(document.querySelectorAll('.pump-card[data-kind="pump"]'));
       const pump3Card = document.querySelector('.pump-card[data-index="2"]');
@@ -248,6 +244,9 @@
         const pipe = pipes.get(String(index));
         if (pipe) {
           pipe.classList.toggle("on", on);
+        }
+        if (window.Process3D && typeof window.Process3D.setFlow === "function") {
+          window.Process3D.setFlow(Number(index), Boolean(on));
         }
       }
 
