@@ -7,9 +7,27 @@ const PROCESS_3D = (() => {
   let scene = null;
   let camera = null;
   let flows = [];
+  let pipeGroup = null;
   let resizeObserver = null;
+  const tankGroups = {};
+
+  const tankMap = {
+    soak: {
+      tank: ".tank.soak",
+      body: ".tank.soak .tank-body",
+    },
+    fresh: {
+      tank: ".tank.small.fresh",
+      body: ".tank.small.fresh .tank-body",
+    },
+    heat: {
+      tank: ".tank.small.heat",
+      body: ".tank.small.heat .tank-body",
+    },
+  };
 
   function parseLevel(el) {
+    if (!el) return 0.6;
     const raw = getComputedStyle(el).getPropertyValue("--level").trim();
     const value = Number(raw);
     if (Number.isFinite(value)) return Math.max(0, Math.min(100, value)) / 100;
@@ -17,6 +35,7 @@ const PROCESS_3D = (() => {
   }
 
   function parseLiquidColor(el) {
+    if (!el) return [60, 160, 220];
     const raw = getComputedStyle(el).getPropertyValue("--liquid-base").trim();
     const parts = raw.split(/\s+/).map((part) => Number(part));
     if (parts.length >= 3 && parts.every((v) => Number.isFinite(v))) {
@@ -26,27 +45,29 @@ const PROCESS_3D = (() => {
   }
 
   function setupLights() {
-    const ambient = new THREE.AmbientLight(0x88b5ff, 0.5);
-    const key = new THREE.DirectionalLight(0xffffff, 1.1);
-    key.position.set(3, 6, 5);
-    const rim = new THREE.PointLight(0x3ed0ff, 1.2, 20);
-    rim.position.set(-4, 3, 3);
+    const ambient = new THREE.AmbientLight(0x88b5ff, 0.55);
+    const key = new THREE.DirectionalLight(0xffffff, 1.05);
+    key.position.set(2, 6, 6);
+    const rim = new THREE.PointLight(0x3ed0ff, 1.2, 2000);
+    rim.position.set(-200, 180, 400);
     scene.add(ambient, key, rim);
   }
 
-  function createTank({ position, radius, height, color, level }) {
+  function createTank({ color, level }) {
     const group = new THREE.Group();
-    group.position.copy(position);
+    const radius = 0.5;
+    const height = 1.0;
 
     const glassMat = new THREE.MeshPhysicalMaterial({
-      color: 0x88c9ff,
+      color: 0x90cfff,
       roughness: 0.08,
       metalness: 0.05,
-      transmission: 0.85,
+      transmission: 0.88,
       thickness: 0.6,
       transparent: true,
-      opacity: 0.35,
-      clearcoat: 0.7,
+      opacity: 0.32,
+      clearcoat: 0.8,
+      ior: 1.2,
     });
     const glass = new THREE.Mesh(
       new THREE.CylinderGeometry(radius, radius, height, 48, 1, true),
@@ -56,61 +77,81 @@ const PROCESS_3D = (() => {
     group.add(glass);
 
     const rimMat = new THREE.MeshStandardMaterial({
-      color: 0xced9e6,
-      metalness: 0.6,
+      color: 0xd4dde8,
+      metalness: 0.7,
       roughness: 0.2,
     });
     const rim = new THREE.Mesh(
-      new THREE.TorusGeometry(radius * 1.01, radius * 0.06, 16, 64),
+      new THREE.TorusGeometry(radius * 1.02, radius * 0.07, 16, 64),
       rimMat
     );
     rim.rotation.x = Math.PI / 2;
     rim.position.y = height + 0.02;
     group.add(rim);
 
+    const lid = new THREE.Mesh(
+      new THREE.CylinderGeometry(radius * 0.98, radius * 0.98, height * 0.04, 48),
+      rimMat
+    );
+    lid.position.y = height + 0.04;
+    group.add(lid);
+
     const base = new THREE.Mesh(
-      new THREE.CylinderGeometry(radius * 1.1, radius * 1.1, height * 0.08, 36),
+      new THREE.CylinderGeometry(radius * 1.12, radius * 1.12, height * 0.08, 36),
       rimMat
     );
     base.position.y = height * 0.04;
     group.add(base);
 
-    const liquidHeight = Math.max(0.05, height * level);
     const liquidMat = new THREE.MeshStandardMaterial({
       color: new THREE.Color(`rgb(${color[0]}, ${color[1]}, ${color[2]})`),
       emissive: new THREE.Color(`rgb(${color[0]}, ${color[1]}, ${color[2]})`),
-      emissiveIntensity: 0.2,
-      roughness: 0.1,
+      emissiveIntensity: 0.25,
+      roughness: 0.08,
       metalness: 0.05,
       transparent: true,
-      opacity: 0.75,
+      opacity: 0.78,
     });
     const liquid = new THREE.Mesh(
-      new THREE.CylinderGeometry(radius * 0.96, radius * 0.96, liquidHeight, 40),
+      new THREE.CylinderGeometry(radius * 0.96, radius * 0.96, 1, 40),
       liquidMat
     );
-    liquid.position.y = liquidHeight / 2 + 0.06;
     group.add(liquid);
 
     group.userData.liquid = liquid;
     group.userData.height = height;
-
+    group.userData.radius = radius;
+    updateTankLevel(group, level);
     return group;
+  }
+
+  function updateTankLevel(group, level) {
+    const clamped = Math.max(0.05, Math.min(1, level));
+    const liquid = group.userData.liquid;
+    liquid.scale.y = clamped;
+    liquid.position.y = clamped / 2 + 0.04;
+  }
+
+  function updateTankColor(group, color) {
+    const liquid = group.userData.liquid;
+    const normalized = color.map((v) => v / 255);
+    liquid.material.color.setRGB(normalized[0], normalized[1], normalized[2]);
+    liquid.material.emissive.setRGB(normalized[0], normalized[1], normalized[2]);
   }
 
   function createPipe(curve, radius, color) {
     const mat = new THREE.MeshStandardMaterial({
       color: 0x6b7f94,
       metalness: 0.6,
-      roughness: 0.3,
+      roughness: 0.35,
     });
     const tube = new THREE.Mesh(
       new THREE.TubeGeometry(curve, 120, radius, 12, false),
       mat
     );
-    scene.add(tube);
+    pipeGroup.add(tube);
 
-    const count = 90;
+    const count = 120;
     const positions = new Float32Array(count * 3);
     const offsets = new Float32Array(count);
     for (let i = 0; i < count; i += 1) {
@@ -122,101 +163,106 @@ const PROCESS_3D = (() => {
       geo,
       new THREE.PointsMaterial({
         color: new THREE.Color(`rgb(${color[0]}, ${color[1]}, ${color[2]})`),
-        size: 0.08,
+        size: radius * 1.2,
         transparent: true,
         opacity: 0,
       })
     );
-    scene.add(points);
-    return { curve, points, offsets, speed: 0.22, active: false };
+    pipeGroup.add(points);
+    return { curve, points, offsets, speed: 0.25, active: false };
+  }
+
+  function getCameraDistance(height, fov) {
+    const radians = THREE.MathUtils.degToRad(fov / 2);
+    return (height / 2) / Math.tan(radians);
   }
 
   function buildScene() {
     scene = new THREE.Scene();
+    pipeGroup = new THREE.Group();
+    scene.add(pipeGroup);
 
     const width = container.clientWidth || 920;
     const height = container.clientHeight || 360;
-    camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 100);
-    camera.position.set(0, 3.4, 9);
-    camera.lookAt(0, 1.2, 0);
+    const fov = 32;
+    camera = new THREE.PerspectiveCamera(fov, width / height, 0.1, 5000);
+    const distance = getCameraDistance(height, fov);
+    camera.position.set(0, 0, distance);
+    camera.lookAt(0, 0, 0);
 
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(1.8, window.devicePixelRatio || 1));
     renderer.setSize(width, height);
     renderer.setClearColor(0x000000, 0);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.physicallyCorrectLights = true;
     container.appendChild(renderer.domElement);
 
     setupLights();
 
-    const soakEl = document.querySelector(".tank.soak");
-    const freshEl = document.querySelector(".tank.small.fresh");
-    const heatEl = document.querySelector(".tank.small.heat");
-
-    const soak = createTank({
-      position: new THREE.Vector3(-2.2, 0, 0),
-      radius: 1.45,
-      height: 2.6,
-      color: parseLiquidColor(soakEl || container),
-      level: parseLevel(soakEl || container),
-    });
-    const fresh = createTank({
-      position: new THREE.Vector3(2.7, 1.2, -0.4),
-      radius: 0.9,
-      height: 1.5,
-      color: parseLiquidColor(freshEl || container),
-      level: parseLevel(freshEl || container),
-    });
-    const heat = createTank({
-      position: new THREE.Vector3(2.7, -0.7, 0.3),
-      radius: 0.9,
-      height: 1.5,
-      color: parseLiquidColor(heatEl || container),
-      level: parseLevel(heatEl || container),
+    Object.keys(tankMap).forEach((key) => {
+      const tankEl = document.querySelector(tankMap[key].tank);
+      const tank = createTank({
+        color: parseLiquidColor(tankEl),
+        level: parseLevel(tankEl),
+      });
+      tankGroups[key] = tank;
+      scene.add(tank);
     });
 
-    scene.add(soak, fresh, heat);
+    syncLayout();
+    syncFromDom();
+  }
+
+  function syncLayout() {
+    const containerRect = container.getBoundingClientRect();
+    Object.keys(tankMap).forEach((key) => {
+      const group = tankGroups[key];
+      const body = document.querySelector(tankMap[key].body);
+      if (!group || !body) return;
+      const rect = body.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+      const centerX = rect.left + rect.width / 2 - containerRect.left - containerRect.width / 2;
+      const bottomY = rect.bottom - containerRect.top;
+      const y = containerRect.height / 2 - bottomY;
+      group.position.set(centerX, y, 0);
+      group.scale.set(width, height, width);
+      group.rotation.y = -0.12;
+      group.rotation.x = 0.05;
+    });
+
+    rebuildPipes(containerRect);
+  }
+
+  function rebuildPipes(containerRect) {
+    flows = [];
+    if (!pipeGroup) return;
+    while (pipeGroup.children.length) {
+      const child = pipeGroup.children.pop();
+      child.geometry?.dispose?.();
+      child.material?.dispose?.();
+    }
 
     const pipeColor = [65, 180, 255];
-    flows = [
-      createPipe(
-        new THREE.CatmullRomCurve3([
-          new THREE.Vector3(-0.5, 1.4, 0.1),
-          new THREE.Vector3(0.6, 1.4, 0.1),
-          new THREE.Vector3(1.6, 1.4, 0.1),
-          new THREE.Vector3(2.3, 1.4, -0.1),
-        ]),
-        0.08,
-        pipeColor
-      ),
-      createPipe(
-        new THREE.CatmullRomCurve3([
-          new THREE.Vector3(-0.4, 1.0, 0.2),
-          new THREE.Vector3(0.8, 1.0, 0.2),
-          new THREE.Vector3(2.2, 1.0, -0.2),
-        ]),
-        0.07,
-        pipeColor
-      ),
-      createPipe(
-        new THREE.CatmullRomCurve3([
-          new THREE.Vector3(-0.5, 0.1, 0.1),
-          new THREE.Vector3(0.6, 0.1, 0.1),
-          new THREE.Vector3(1.6, 0.1, 0.2),
-          new THREE.Vector3(2.3, 0.1, 0.3),
-        ]),
-        0.08,
-        pipeColor
-      ),
-      createPipe(
-        new THREE.CatmullRomCurve3([
-          new THREE.Vector3(-0.3, -0.3, 0.2),
-          new THREE.Vector3(0.9, -0.3, 0.2),
-          new THREE.Vector3(2.1, -0.3, 0.3),
-        ]),
-        0.07,
-        pipeColor
-      ),
-    ];
+    document.querySelectorAll(".pipe").forEach((pipeEl) => {
+      const idx = Number(pipeEl.dataset.pipe);
+      const rect = pipeEl.getBoundingClientRect();
+      if (!Number.isFinite(idx)) return;
+      const startX = rect.left - containerRect.left - containerRect.width / 2;
+      const endX = rect.right - containerRect.left - containerRect.width / 2;
+      const midX = (startX + endX) / 2;
+      const centerY = rect.top + rect.height / 2 - containerRect.top;
+      const y = containerRect.height / 2 - centerY;
+      const z = idx % 2 === 0 ? 6 : -6;
+      const curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(startX, y, z),
+        new THREE.Vector3(midX, y + 6, z),
+        new THREE.Vector3(endX, y, z),
+      ]);
+      const radius = Math.max(2.2, rect.height * 0.35);
+      flows[idx] = createPipe(curve, radius, pipeColor);
+    });
   }
 
   function resize() {
@@ -224,17 +270,22 @@ const PROCESS_3D = (() => {
     const width = container.clientWidth || 920;
     const height = container.clientHeight || 360;
     camera.aspect = width / height;
+    const distance = getCameraDistance(height, camera.fov);
+    camera.position.set(0, 0, distance);
     camera.updateProjectionMatrix();
     renderer.setSize(width, height);
+    syncLayout();
+    syncFromDom();
   }
 
   function animate(time) {
     if (!renderer) return;
     flows.forEach((flow) => {
+      if (!flow) return;
       const { curve, points, offsets, speed, active } = flow;
       const positions = points.geometry.attributes.position.array;
       for (let i = 0; i < offsets.length; i += 1) {
-        const t = (offsets[i] + (time * 0.0001 * speed)) % 1;
+        const t = (offsets[i] + (time * 0.00006 * speed)) % 1;
         const pos = curve.getPointAt(t);
         positions[i * 3] = pos.x;
         positions[i * 3 + 1] = pos.y;
@@ -252,11 +303,18 @@ const PROCESS_3D = (() => {
   }
 
   function syncFromDom() {
-    document.querySelectorAll(".pipe").forEach((pipe) => {
-      const idx = Number(pipe.dataset.pipe);
-      if (Number.isFinite(idx)) {
-        setFlow(idx, pipe.classList.contains("on"));
-      }
+    Object.keys(tankMap).forEach((key) => {
+      const tankEl = document.querySelector(tankMap[key].tank);
+      const group = tankGroups[key];
+      if (!tankEl || !group) return;
+      updateTankLevel(group, parseLevel(tankEl));
+      updateTankColor(group, parseLiquidColor(tankEl));
+    });
+
+    document.querySelectorAll(".pipe").forEach((pipeEl) => {
+      const idx = Number(pipeEl.dataset.pipe);
+      if (!Number.isFinite(idx)) return;
+      setFlow(idx, pipeEl.classList.contains("on"));
     });
   }
 
@@ -271,7 +329,6 @@ const PROCESS_3D = (() => {
     document.body.classList.add("use-3d");
     resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(container);
-    syncFromDom();
     renderer.setAnimationLoop(animate);
   }
 

@@ -260,6 +260,9 @@
         if (soakTank && Array.isArray(color) && color.length === 3) {
           soakTank.style.setProperty("--liquid-base", `${color[0]} ${color[1]} ${color[2]}`);
         }
+        if (window.Process3D && typeof window.Process3D.syncFromDom === "function") {
+          window.Process3D.syncFromDom();
+        }
       }
 
       function setPumpStatus(card, on) {
