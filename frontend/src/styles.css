@@ -328,24 +328,24 @@ body::before {
 }
 
 .flow-tag.c {
-  right: 182px;
+  right: 94px;
   top: 1296px;
 }
 
 .flow-tag.d {
-  left: 182px;
+  left: 94px;
   top: 1296px;
 }
 
 .actuator {
   position: absolute;
-  width: 66px;
+  width: 94px;
   z-index: 4;
 }
 
 .actuator .machine {
-  width: 66px;
-  height: 42px;
+  width: 94px;
+  height: 56px;
   position: relative;
 }
 
@@ -356,7 +356,7 @@ body::before {
 }
 
 .actuator .actuator-meta {
-  margin-top: 4px;
+  margin-top: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -375,102 +375,245 @@ body::before {
   box-shadow: 0 0 10px rgba(98, 231, 255, 0.85);
 }
 
-.machine.pump .pump-foot {
+.machine.pump .pump-skid {
   position: absolute;
-  left: 6px;
-  right: 6px;
-  bottom: 0;
-  height: 8px;
-  border-radius: 4px;
-  background: #2d435d;
+  left: 8px;
+  right: 8px;
+  bottom: 4px;
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #2e4867, #1e3249);
 }
 
 .machine.pump .pump-motor {
   position: absolute;
-  left: 12px;
-  right: 12px;
-  top: 12px;
-  height: 18px;
-  border-radius: 9px;
-  background: linear-gradient(120deg, #94a8be, #4d6580 55%, #2e455f);
+  left: 18px;
+  width: 44px;
+  top: 16px;
+  height: 22px;
+  border-radius: 11px;
+  background: linear-gradient(120deg, #a6b9cd, #5a738f 55%, #324c68);
   border: 1px solid rgba(188, 223, 255, 0.45);
 }
 
-.machine.pump .pump-fan {
+.machine.pump .pump-ribs {
   position: absolute;
-  right: 14px;
-  top: 16px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 2px solid rgba(221, 240, 255, 0.8);
+  left: 24px;
+  top: 20px;
+  width: 30px;
+  height: 14px;
+  border-radius: 7px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(230, 244, 255, 0.38) 0 2px,
+    rgba(68, 94, 121, 0) 2px 5px
+  );
 }
 
 .machine.pump .pump-port {
   position: absolute;
-  top: 18px;
-  width: 10px;
-  height: 7px;
+  top: 24px;
+  width: 14px;
+  height: 8px;
   border-radius: 4px;
-  background: #90a8c2;
+  background: linear-gradient(90deg, #8fa7c1, #617c99);
+  border: 1px solid rgba(189, 224, 255, 0.35);
 }
 
 .machine.pump .pump-port.left {
-  left: 3px;
+  left: 2px;
 }
 
 .machine.pump .pump-port.right {
-  right: 3px;
+  right: 2px;
 }
 
-.machine.valve .valve-body {
+.machine.pump .pump-endcap {
   position: absolute;
-  left: 8px;
-  right: 8px;
-  top: 16px;
-  height: 12px;
-  border-radius: 6px;
-  background: linear-gradient(120deg, #89a8c1, #4a698a 55%, #2e4866);
+  left: 10px;
+  top: 18px;
+  width: 12px;
+  height: 18px;
+  border-radius: 8px;
+  background: linear-gradient(120deg, #93aac4, #4f6984);
+  border: 1px solid rgba(188, 223, 255, 0.42);
+}
+
+.machine.pump .pump-coupling {
+  position: absolute;
+  left: 62px;
+  top: 22px;
+  width: 9px;
+  height: 11px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #8ca4bf, #4c657f);
+}
+
+.machine.pump .pump-volute {
+  position: absolute;
+  left: 69px;
+  top: 14px;
+  width: 18px;
+  height: 24px;
+  border-radius: 50% 42% 48% 44%;
+  background: radial-gradient(circle at 35% 40%, #afc2d5 0%, #6e87a3 58%, #425d78 100%);
   border: 1px solid rgba(188, 223, 255, 0.45);
+}
+
+.machine.pump .pump-bolt {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #c6d8ea;
+}
+
+.machine.pump .pump-bolt.a {
+  left: 74px;
+  top: 18px;
+}
+
+.machine.pump .pump-bolt.b {
+  left: 78px;
+  top: 31px;
+}
+
+.actuator.pump.on .machine.pump {
+  filter: drop-shadow(0 0 8px rgba(98, 231, 255, 0.35));
+}
+
+.machine.valve .valve-pedestal {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #2c4a69, #1e3249);
+}
+
+.machine.valve .valve-flange {
+  position: absolute;
+  top: 20px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #b8cce1 0%, #6c86a3 62%, #415d79 100%);
+  border: 1px solid rgba(192, 226, 255, 0.45);
+}
+
+.machine.valve .valve-flange.left {
+  left: 2px;
+}
+
+.machine.valve .valve-flange.right {
+  right: 2px;
+}
+
+.machine.valve .valve-main {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background: linear-gradient(120deg, #9ab4cc, #5a7693 56%, #344f6c);
+  border: 1px solid rgba(191, 225, 255, 0.5);
+}
+
+.machine.valve .valve-neck {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 11px;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(120deg, #a8c0d6, #597a98);
+  border: 1px solid rgba(191, 225, 255, 0.4);
+}
+
+.machine.valve .valve-bonnet {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 6px;
+  width: 18px;
+  height: 10px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #9eb9cf, #567593);
+  border: 1px solid rgba(191, 225, 255, 0.45);
 }
 
 .machine.valve .valve-stem {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: 8px;
-  width: 6px;
-  height: 16px;
-  border-radius: 3px;
-  background: #b3d2eb;
+  top: 3px;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: #d4e4f3;
 }
 
-.machine.valve .valve-wheel {
+.machine.valve .valve-wheel-ring {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: 1px;
-  width: 24px;
-  height: 10px;
+  top: -5px;
+  width: 28px;
+  height: 12px;
   border-radius: 50%;
-  border: 2px solid #afd0e8;
+  border: 2px solid #b4d5ee;
+  background: rgba(20, 34, 52, 0.2);
 }
 
-.machine.valve .valve-port {
+.machine.valve .valve-wheel-spoke {
   position: absolute;
-  top: 19px;
-  width: 8px;
-  height: 8px;
-  border-radius: 4px;
-  background: #90a9c4;
+  left: 50%;
+  top: 0;
+  width: 16px;
+  height: 2px;
+  transform-origin: 0 50%;
+  background: rgba(198, 226, 248, 0.9);
 }
 
-.machine.valve .valve-port.left {
-  left: 2px;
+.machine.valve .valve-wheel-spoke.s1 {
+  transform: translateX(-8px) rotate(0deg);
 }
 
-.machine.valve .valve-port.right {
-  right: 2px;
+.machine.valve .valve-wheel-spoke.s2 {
+  transform: translateX(-8px) rotate(45deg);
+}
+
+.machine.valve .valve-wheel-spoke.s3 {
+  transform: translateX(-8px) rotate(90deg);
+}
+
+.machine.valve .valve-wheel-spoke.s4 {
+  transform: translateX(-8px) rotate(135deg);
+}
+
+.machine.valve .valve-bolt {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #c9dcec;
+}
+
+.machine.valve .valve-bolt.a {
+  left: 20px;
+  top: 24px;
+}
+
+.machine.valve .valve-bolt.b {
+  right: 20px;
+  top: 24px;
+}
+
+.actuator.valve.on .machine.valve {
+  filter: drop-shadow(0 0 8px rgba(98, 231, 255, 0.32));
 }
 
 @keyframes flow-forward {
