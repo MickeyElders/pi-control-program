@@ -1304,6 +1304,27 @@ button.actuator {
   margin-bottom: 8px;
 }
 
+.trend-legend {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: #a8c1dd;
+}
+
+.legend-item i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
 .trend-toolbar .group {
   display: flex;
   gap: 6px;
@@ -1359,10 +1380,18 @@ button.actuator {
   filter: drop-shadow(0 0 8px rgba(118, 228, 255, 0.46));
 }
 
+.trend-chart .metric-tag {
+  fill: #9ed3ff;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
 .trend-stats {
   margin-top: 6px;
   display: flex;
   gap: 16px;
+  flex-wrap: wrap;
+  row-gap: 4px;
   font-size: 0.72rem;
   color: #adc5de;
   font-family: "IBM Plex Mono", monospace;

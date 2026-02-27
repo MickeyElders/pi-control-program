@@ -14,11 +14,7 @@ import {
 } from "./api";
 import type { CommLog } from "./components/TopInfoPanels";
 import HeaterCard from "./components/HeaterCard";
-import HistoryTrendPanel, {
-  type HistorySample,
-  type TrendMetric,
-  type TrendRange,
-} from "./components/HistoryTrendPanel";
+import HistoryTrendPanel, { type HistorySample } from "./components/HistoryTrendPanel";
 import LiftPanel from "./components/LiftPanel";
 import OpsPanels, { type AlarmItem, type EventItem, type RuntimeStats } from "./components/OpsPanels";
 import ProcessDiagram2D from "./components/ProcessDiagram2D";
@@ -159,9 +155,6 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<Record<string, boolean>>({});
   const [history, setHistory] = useState<HistorySample[]>([]);
-  const [trendMetric, setTrendMetric] = useState<TrendMetric>("temp");
-  const [trendTank, setTrendTank] = useState<TankKey>("soak");
-  const [trendRange, setTrendRange] = useState<TrendRange>("30m");
   const [commLogs, setCommLogs] = useState<CommLog[]>([]);
   const [requestOk, setRequestOk] = useState(0);
   const [requestFail, setRequestFail] = useState(0);
@@ -560,15 +553,7 @@ export default function App() {
           />
         </main>
 
-        <HistoryTrendPanel
-          samples={history}
-          metric={trendMetric}
-          tank={trendTank}
-          range={trendRange}
-          onMetricChange={setTrendMetric}
-          onTankChange={setTrendTank}
-          onRangeChange={setTrendRange}
-        />
+        <HistoryTrendPanel samples={history} />
 
         <OpsPanels events={events} alarms={alarmList} runtime={runtime} />
 

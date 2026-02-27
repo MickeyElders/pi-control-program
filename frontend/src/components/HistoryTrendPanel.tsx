@@ -6,24 +6,16 @@ export type HistorySample = {
   values: Record<TankKey, { temp: number | null; ph: number | null; level: number | null }>;
 };
 
-export type TrendMetric = "temp" | "ph" | "level";
-export type TrendRange = "30m" | "2h" | "24h";
+type TrendMetric = "temp" | "ph" | "level";
 
 export type HistoryTrendPanelProps = {
   samples: HistorySample[];
-  metric: TrendMetric;
-  tank: TankKey;
-  range: TrendRange;
-  onMetricChange: (metric: TrendMetric) => void;
-  onTankChange: (tank: TankKey) => void;
-  onRangeChange: (range: TrendRange) => void;
 };
 
-const RANGE_MS: Record<TrendRange, number> = {
-  "30m": 30 * 60 * 1000,
-  "2h": 2 * 60 * 60 * 1000,
-  "24h": 24 * 60 * 60 * 1000,
-};
+const RANGE_MS = 2 * 60 * 60 * 1000;
+const CHART_W = 860;
+const ROW_H = 74;
+const ROW_GAP = 8;
 
 const metricLabel: Record<TrendMetric, string> = {
   temp: "温度",
@@ -35,6 +27,12 @@ const tankLabel: Record<TankKey, string> = {
   soak: "浸泡桶",
   fresh: "清水桶",
   heat: "加热桶",
+};
+
+const tankColor: Record<TankKey, string> = {
+  soak: "#8cf1b5",
+  fresh: "#76d4ff",
+  heat: "#ffbe87",
 };
 
 const formatMetric = (metric: TrendMetric, value: number) => {
@@ -49,131 +47,125 @@ const normalizeLevel = (value: number | null) => {
   return num > 1 ? num : num * 100;
 };
 
-export default function HistoryTrendPanel({
-  samples,
-  metric,
-  tank,
-  range,
-  onMetricChange,
-  onTankChange,
-  onRangeChange,
-}: HistoryTrendPanelProps) {
+const readMetric = (sample: HistorySample, tank: TankKey, metric: TrendMetric) => {
+  const raw = sample.values[tank][metric];
+  if (metric === "level") return normalizeLevel(raw);
+  return raw;
+};
+
+export default function HistoryTrendPanel({ samples }: HistoryTrendPanelProps) {
   const filtered = useMemo(() => {
-    const cutoff = Date.now() - RANGE_MS[range];
+    const cutoff = Date.now() - RANGE_MS;
     return samples.filter((sample) => sample.ts >= cutoff);
-  }, [samples, range]);
+  }, [samples]);
 
-  const values = useMemo(() => {
-    return filtered
-      .map((sample) => {
-        const reading = sample.values[tank];
-        const raw = metric === "level" ? normalizeLevel(reading.level) : reading[metric];
-        return raw;
-      })
-      .filter((value): value is number => Number.isFinite(value));
-  }, [filtered, metric, tank]);
+  const chartRows = useMemo(() => {
+    return (["temp", "ph", "level"] as TrendMetric[]).map((metric) => {
+      const allValues: number[] = [];
+      for (const tank of ["soak", "fresh", "heat"] as TankKey[]) {
+        for (const sample of filtered) {
+          const value = readMetric(sample, tank, metric);
+          if (Number.isFinite(value)) allValues.push(Number(value));
+        }
+      }
+      const minValue = metric === "level" ? 0 : (allValues.length ? Math.min(...allValues) : 0);
+      const maxValue = metric === "level" ? 100 : (allValues.length ? Math.max(...allValues) : 1);
+      const pad = minValue === maxValue ? 1 : (maxValue - minValue) * 0.15;
+      const yMin = minValue - pad;
+      const yMax = maxValue + pad;
 
-  const chart = useMemo(() => {
-    const width = 860;
-    const height = 240;
-    if (filtered.length < 2 || values.length < 2) {
-      return { path: "", area: "", min: 0, max: 0, latest: null as number | null };
-    }
+      const series = (["soak", "fresh", "heat"] as TankKey[]).map((tank) => {
+        const points: string[] = [];
+        const values: number[] = [];
+        filtered.forEach((sample, index) => {
+          const value = readMetric(sample, tank, metric);
+          if (!Number.isFinite(value)) return;
+          const numeric = Number(value);
+          const x = (index / (Math.max(filtered.length - 1, 1))) * CHART_W;
+          const ratio = (numeric - yMin) / (yMax - yMin || 1);
+          const y = ROW_H - ratio * ROW_H;
+          points.push(`${points.length === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`);
+          values.push(numeric);
+        });
+        return {
+          tank,
+          path: points.join(" "),
+          latest: values.length ? values[values.length - 1] : null,
+        };
+      });
 
-    const points: Array<{ x: number; y: number; v: number }> = [];
-    const min = metric === "level" ? 0 : Math.min(...values);
-    const max = metric === "level" ? 100 : Math.max(...values);
-    const pad = min === max ? 1 : (max - min) * 0.15;
-    const yMin = min - pad;
-    const yMax = max + pad;
-
-    filtered.forEach((sample, index) => {
-      const reading = sample.values[tank];
-      const raw = metric === "level" ? normalizeLevel(reading.level) : reading[metric];
-      if (raw === null || !Number.isFinite(raw)) return;
-      const value = Number(raw);
-      const ratio = (value - yMin) / (yMax - yMin || 1);
-      const x = (index / (filtered.length - 1 || 1)) * width;
-      const y = height - ratio * height;
-      points.push({ x, y, v: value });
+      return {
+        metric,
+        min: allValues.length ? Math.min(...allValues) : null,
+        max: allValues.length ? Math.max(...allValues) : null,
+        series,
+      };
     });
+  }, [filtered]);
 
-    if (points.length < 2) {
-      return { path: "", area: "", min, max, latest: null as number | null };
-    }
+  const latestText = useMemo(() => {
+    return (["temp", "ph", "level"] as TrendMetric[]).map((metric) => {
+      const parts = (["soak", "fresh", "heat"] as TankKey[]).map((tank) => {
+        const latest = chartRows.find((row) => row.metric === metric)?.series.find((s) => s.tank === tank)?.latest;
+        return `${tankLabel[tank]} ${Number.isFinite(latest) ? formatMetric(metric, Number(latest)) : "--"}`;
+      });
+      return `${metricLabel[metric]}: ${parts.join(" / ")}`;
+    });
+  }, [chartRows]);
 
-    const path = points.map((p, idx) => `${idx === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-    const area = `${path} L ${width},${height} L 0,${height} Z`;
-    const latest = points[points.length - 1]?.v ?? null;
-    return { path, area, min, max, latest };
-  }, [filtered, values, metric, tank]);
+  const chartHeight = ROW_H * 3 + ROW_GAP * 2;
 
   return (
     <section className="trend-zone">
-      <div className="card-title">历史趋势</div>
-      <div className="trend-toolbar">
-        <div className="group">
-          {(["temp", "ph", "level"] as TrendMetric[]).map((item) => (
-            <button
-              type="button"
-              key={item}
-              className={`mini-btn ${metric === item ? "active" : ""}`}
-              onClick={() => onMetricChange(item)}
-            >
-              {metricLabel[item]}
-            </button>
-          ))}
-        </div>
-        <div className="group">
-          {(["soak", "fresh", "heat"] as TankKey[]).map((item) => (
-            <button
-              type="button"
-              key={item}
-              className={`mini-btn ${tank === item ? "active" : ""}`}
-              onClick={() => onTankChange(item)}
-            >
-              {tankLabel[item]}
-            </button>
-          ))}
-        </div>
-        <div className="group">
-          {(["30m", "2h", "24h"] as TrendRange[]).map((item) => (
-            <button
-              type="button"
-              key={item}
-              className={`mini-btn ${range === item ? "active" : ""}`}
-              onClick={() => onRangeChange(item)}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
+      <div className="card-title">历史趋势（最近2小时，全量展示）</div>
+      <div className="trend-legend">
+        {(["soak", "fresh", "heat"] as TankKey[]).map((tank) => (
+          <span className="legend-item" key={tank}>
+            <i style={{ background: tankColor[tank] }} />
+            {tankLabel[tank]}
+          </span>
+        ))}
       </div>
 
       <div className="trend-chart-wrap">
-        <svg viewBox="0 0 860 240" className="trend-chart">
-          <defs>
-            <linearGradient id="trendArea" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgba(90, 228, 255, 0.45)" />
-              <stop offset="100%" stopColor="rgba(90, 228, 255, 0.04)" />
-            </linearGradient>
-          </defs>
-          <g>
-            <line x1="0" y1="240" x2="860" y2="240" className="axis" />
-            <line x1="0" y1="180" x2="860" y2="180" className="grid" />
-            <line x1="0" y1="120" x2="860" y2="120" className="grid" />
-            <line x1="0" y1="60" x2="860" y2="60" className="grid" />
-          </g>
-          {chart.area ? <path d={chart.area} className="trend-area" /> : null}
-          {chart.path ? <path d={chart.path} className="trend-line" /> : null}
+        <svg viewBox={`0 0 ${CHART_W} ${chartHeight}`} className="trend-chart">
+          {chartRows.map((row, rowIndex) => {
+            const yBase = rowIndex * (ROW_H + ROW_GAP);
+            return (
+              <g key={row.metric} transform={`translate(0 ${yBase})`}>
+                <line x1="0" y1={ROW_H} x2={CHART_W} y2={ROW_H} className="axis" />
+                <line x1="0" y1={ROW_H / 2} x2={CHART_W} y2={ROW_H / 2} className="grid" />
+                <line x1="0" y1={ROW_H / 4} x2={CHART_W} y2={ROW_H / 4} className="grid" />
+                <text className="metric-tag" x="8" y="14">
+                  {metricLabel[row.metric]}
+                </text>
+                {row.series.map((series) =>
+                  series.path ? (
+                    <path
+                      key={`${row.metric}-${series.tank}`}
+                      d={series.path}
+                      className="trend-line"
+                      stroke={tankColor[series.tank]}
+                    />
+                  ) : null
+                )}
+              </g>
+            );
+          })}
         </svg>
       </div>
 
       <div className="trend-stats">
-        <span>当前：{chart.latest === null ? "--" : formatMetric(metric, chart.latest)}</span>
-        <span>最小：{values.length ? formatMetric(metric, Math.min(...values)) : "--"}</span>
-        <span>最大：{values.length ? formatMetric(metric, Math.max(...values)) : "--"}</span>
+        {latestText.map((text) => (
+          <span key={text}>{text}</span>
+        ))}
         <span>样本：{filtered.length}</span>
+        <span>
+          统计范围：
+          {chartRows
+            .map((row) => `${metricLabel[row.metric]} ${row.min === null ? "--" : formatMetric(row.metric, row.min)}~${row.max === null ? "--" : formatMetric(row.metric, row.max)}`)
+            .join(" | ")}
+        </span>
       </div>
     </section>
   );
