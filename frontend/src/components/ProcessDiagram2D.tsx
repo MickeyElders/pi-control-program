@@ -97,23 +97,29 @@ const ActuatorNode = ({
   style: CSSProperties;
 }) => {
   return (
-    <div className={`actuator-node ${kind} ${on ? "on" : "off"}`} style={style}>
-      <div className="actuator-header">
-        <span className="name">{label}</span>
-        <span className={`lamp ${on ? "on" : "off"}`} />
-      </div>
-      <div className={`actuator-icon ${kind}`}>
+    <div className={`actuator ${kind} ${on ? "on" : "off"}`} style={style}>
+      <div className={`machine ${kind}`}>
         {kind === "pump" ? (
           <>
-            <span className="core" />
-            <span className="port" />
+            <span className="pump-foot" />
+            <span className="pump-motor" />
+            <span className="pump-fan" />
+            <span className="pump-port left" />
+            <span className="pump-port right" />
           </>
         ) : (
           <>
-            <span className="stem" />
-            <span className="body" />
+            <span className="valve-body" />
+            <span className="valve-stem" />
+            <span className="valve-wheel" />
+            <span className="valve-port left" />
+            <span className="valve-port right" />
           </>
         )}
+      </div>
+      <div className="actuator-meta">
+        <span className="name">{label}</span>
+        <span className={`lamp ${on ? "on" : "off"}`} />
       </div>
     </div>
   );
@@ -122,6 +128,8 @@ const ActuatorNode = ({
 export default function ProcessDiagram2D({ tanks, flows, alarms }: ProcessDiagram2DProps) {
   const valveFreshOn = flows.pump3 && flows.valveFresh;
   const valveHeatOn = flows.pump3 && flows.valveHeat;
+  const inletFreshValveOn = flows.pump1;
+  const inletHeatValveOn = flows.pump2;
   const freshRunning = flows.pump1 || valveFreshOn;
   const heatRunning = flows.pump2 || valveHeatOn;
   const soakRunning = flows.pump1 || flows.pump2 || valveFreshOn || valveHeatOn;
@@ -143,54 +151,54 @@ export default function ProcessDiagram2D({ tanks, flows, alarms }: ProcessDiagra
           </marker>
         </defs>
 
-        <path className="pipe-base" d="M1040 432 L1040 520 L820 520 L820 606" />
-        <path className="pipe-shell" d="M1040 432 L1040 520 L820 520 L820 606" />
+        <path className="pipe-base" d="M1040 432 L1040 560 L860 560 L860 648" />
+        <path className="pipe-shell" d="M1040 432 L1040 560 L860 560 L860 648" />
         <path
           className={`pipe-flow ${flows.pump1 ? "on" : ""}`}
           markerEnd={flows.pump1 ? "url(#pipeArrow)" : undefined}
-          d="M1040 432 L1040 520 L820 520 L820 606"
+          d="M1040 432 L1040 560 L860 560 L860 648"
         />
 
-        <path className="pipe-base" d="M400 432 L400 520 L620 520 L620 606" />
-        <path className="pipe-shell" d="M400 432 L400 520 L620 520 L620 606" />
+        <path className="pipe-base" d="M400 432 L400 560 L580 560 L580 648" />
+        <path className="pipe-shell" d="M400 432 L400 560 L580 560 L580 648" />
         <path
           className={`pipe-flow ${flows.pump2 ? "on" : ""}`}
           markerEnd={flows.pump2 ? "url(#pipeArrow)" : undefined}
-          d="M400 432 L400 520 L620 520 L620 606"
+          d="M400 432 L400 560 L580 560 L580 648"
         />
 
-        <path className="pipe-base" d="M720 980 L720 860" />
-        <path className="pipe-shell" d="M720 980 L720 860" />
+        <path className="pipe-base" d="M720 1216 L720 1280 L720 1320" />
+        <path className="pipe-shell" d="M720 1216 L720 1280 L720 1320" />
         <path
           className={`pipe-flow ${flows.pump3 ? "on" : ""}`}
           markerEnd={flows.pump3 ? "url(#pipeArrow)" : undefined}
-          d="M720 980 L720 860"
+          d="M720 1216 L720 1280 L720 1320"
         />
 
-        <path className="pipe-base" d="M930 860 L1120 860 L1120 740 L1160 740 L1160 300 L1060 300" />
-        <path className="pipe-shell" d="M930 860 L1120 860 L1120 740 L1160 740 L1160 300 L1060 300" />
+        <path className="pipe-base" d="M720 1320 L1040 1320 L1040 300 L1060 300" />
+        <path className="pipe-shell" d="M720 1320 L1040 1320 L1040 300 L1060 300" />
         <path
           className={`pipe-flow ${valveFreshOn ? "on" : ""}`}
           markerEnd={valveFreshOn ? "url(#pipeArrow)" : undefined}
-          d="M930 860 L1120 860 L1120 740 L1160 740 L1160 300 L1060 300"
+          d="M720 1320 L1040 1320 L1040 300 L1060 300"
         />
 
-        <path className="pipe-base" d="M510 860 L1120 860 L1120 820 L1160 820 L1160 260 L380 260 L380 300" />
-        <path className="pipe-shell" d="M510 860 L1120 860 L1120 820 L1160 820 L1160 260 L380 260 L380 300" />
+        <path className="pipe-base" d="M720 1320 L400 1320 L400 300 L380 300" />
+        <path className="pipe-shell" d="M720 1320 L400 1320 L400 300 L380 300" />
         <path
           className={`pipe-flow ${valveHeatOn ? "on" : ""}`}
           markerEnd={valveHeatOn ? "url(#pipeArrow)" : undefined}
-          d="M510 860 L1120 860 L1120 820 L1160 820 L1160 260 L380 260 L380 300"
+          d="M720 1320 L400 1320 L400 300 L380 300"
         />
 
-        <circle className="pipe-joint" cx="1040" cy="520" r="8" />
-        <circle className="pipe-joint" cx="820" cy="520" r="8" />
-        <circle className="pipe-joint" cx="400" cy="520" r="8" />
-        <circle className="pipe-joint" cx="620" cy="520" r="8" />
-        <circle className="pipe-joint" cx="1120" cy="860" r="8" />
-        <circle className="pipe-joint" cx="1160" cy="740" r="8" />
-        <circle className="pipe-joint" cx="1160" cy="820" r="8" />
-        <circle className="pipe-joint" cx="1160" cy="260" r="8" />
+        <circle className="pipe-joint" cx="1040" cy="560" r="8" />
+        <circle className="pipe-joint" cx="860" cy="560" r="8" />
+        <circle className="pipe-joint" cx="400" cy="560" r="8" />
+        <circle className="pipe-joint" cx="580" cy="560" r="8" />
+        <circle className="pipe-joint" cx="720" cy="1280" r="8" />
+        <circle className="pipe-joint" cx="720" cy="1320" r="8" />
+        <circle className="pipe-joint" cx="1040" cy="1320" r="8" />
+        <circle className="pipe-joint" cx="400" cy="1320" r="8" />
       </svg>
 
       <div className={`flow-tag a ${flows.pump1 ? "on" : ""}`}>A 清水桶 → 浸泡桶</div>
@@ -198,11 +206,13 @@ export default function ProcessDiagram2D({ tanks, flows, alarms }: ProcessDiagra
       <div className={`flow-tag c ${valveFreshOn ? "on" : ""}`}>C 浸泡桶 → 清水桶</div>
       <div className={`flow-tag d ${valveHeatOn ? "on" : ""}`}>D 浸泡桶 → 加热桶</div>
 
-      <ActuatorNode kind="pump" label="P1" on={flows.pump1} style={{ left: 900, top: 560 }} />
-      <ActuatorNode kind="pump" label="P2" on={flows.pump2} style={{ left: 480, top: 560 }} />
-      <ActuatorNode kind="pump" label="P3" on={flows.pump3} style={{ left: 684, top: 930 }} />
-      <ActuatorNode kind="valve" label="V1" on={valveFreshOn} style={{ left: 1130, top: 680 }} />
-      <ActuatorNode kind="valve" label="V2" on={valveHeatOn} style={{ left: 1130, top: 760 }} />
+      <ActuatorNode kind="pump" label="P1" on={flows.pump1} style={{ left: 1007, top: 476 }} />
+      <ActuatorNode kind="valve" label="V3" on={inletFreshValveOn} style={{ left: 878, top: 532 }} />
+      <ActuatorNode kind="pump" label="P2" on={flows.pump2} style={{ left: 367, top: 476 }} />
+      <ActuatorNode kind="valve" label="V4" on={inletHeatValveOn} style={{ left: 496, top: 532 }} />
+      <ActuatorNode kind="pump" label="P3" on={flows.pump3} style={{ left: 687, top: 1240 }} />
+      <ActuatorNode kind="valve" label="V1" on={valveFreshOn} style={{ left: 970, top: 1278 }} />
+      <ActuatorNode kind="valve" label="V2" on={valveHeatOn} style={{ left: 367, top: 1278 }} />
 
       <Tank
         kind="fresh"
