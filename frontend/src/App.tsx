@@ -22,7 +22,6 @@ import HistoryTrendPanel, {
 import LiftPanel from "./components/LiftPanel";
 import OpsPanels, { type AlarmItem, type EventItem, type RuntimeStats } from "./components/OpsPanels";
 import ProcessDiagram2D from "./components/ProcessDiagram2D";
-import PumpDeck, { type PumpItem } from "./components/PumpDeck";
 import TopInfoPanels from "./components/TopInfoPanels";
 
 const DEFAULT_LEVELS: Record<TankKey, number> = {
@@ -113,12 +112,6 @@ const hasTankAlarm = (reading?: TankReading) => {
     (Number(level) > 1 ? Number(level) : Number(level) * 100) < 15;
   return highTemp || lowTemp || lowPh || highPh || lowLevel;
 };
-
-const pumpMeta = [
-  { index: 0, title: "1号水泵", route: "清水桶 → 浸泡桶" },
-  { index: 1, title: "2号水泵", route: "加热桶 → 浸泡桶" },
-  { index: 2, title: "3号水泵", route: "浸泡桶 → 自动阀" },
-];
 
 const HISTORY_MAX = 4000;
 const LOG_MAX = 18;
@@ -343,15 +336,6 @@ export default function App() {
     valveFresh: effectiveStatus?.auto?.fresh ?? false,
     valveHeat: effectiveStatus?.auto?.heat ?? false,
   };
-
-  const pumps: PumpItem[] = pumpMeta.map((meta) => {
-    const relay = effectiveStatus?.relays?.find((item) => item.index === meta.index);
-    return {
-      ...meta,
-      on: relay?.on ?? false,
-      gpio: relay?.pin,
-    };
-  });
 
   const autoStatus = effectiveStatus?.auto ?? { fresh: false, heat: false, configured: false };
   const liftState = effectiveStatus?.lift?.state ?? "stop";
@@ -584,12 +568,6 @@ export default function App() {
           onMetricChange={setTrendMetric}
           onTankChange={setTrendTank}
           onRangeChange={setTrendRange}
-        />
-
-        <PumpDeck
-          pumps={pumps}
-          autoStatus={autoStatus}
-          online={isOnline}
         />
 
         <OpsPanels events={events} alarms={alarmList} runtime={runtime} />
