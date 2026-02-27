@@ -266,6 +266,7 @@ body::before {
   stroke-width: 30;
   fill: none;
   stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .pipe-shell {
@@ -273,6 +274,7 @@ body::before {
   stroke-width: 20;
   fill: none;
   stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .pipe-flow {
@@ -280,6 +282,7 @@ body::before {
   stroke-width: 12;
   fill: none;
   stroke-linecap: round;
+  stroke-linejoin: round;
   stroke-dasharray: 16 16;
   opacity: 0;
   filter: drop-shadow(0 0 8px rgba(90, 220, 255, 0.8));
@@ -288,6 +291,12 @@ body::before {
 
 .pipe-flow.on {
   opacity: 1;
+}
+
+.pipe-joint {
+  fill: #284969;
+  stroke: rgba(166, 221, 255, 0.65);
+  stroke-width: 2;
 }
 
 .flow-tag {
@@ -309,23 +318,110 @@ body::before {
 }
 
 .flow-tag.a {
-  right: 278px;
-  top: 462px;
+  right: 308px;
+  top: 458px;
 }
 
 .flow-tag.b {
-  left: 292px;
-  top: 462px;
+  left: 318px;
+  top: 458px;
 }
 
 .flow-tag.c {
-  right: 208px;
+  right: 168px;
   top: 332px;
 }
 
 .flow-tag.d {
-  left: 210px;
-  top: 332px;
+  right: 168px;
+  top: 414px;
+}
+
+.actuator-node {
+  position: absolute;
+  width: 96px;
+  z-index: 3;
+  border: 1px solid rgba(80, 170, 245, 0.35);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(18, 34, 58, 0.92), rgba(10, 22, 40, 0.94));
+  box-shadow: 0 10px 20px rgba(4, 10, 22, 0.48), inset 0 0 14px rgba(69, 153, 231, 0.18);
+  padding: 6px 8px 8px;
+}
+
+.actuator-node.on {
+  border-color: rgba(103, 216, 255, 0.75);
+  box-shadow: 0 12px 24px rgba(4, 10, 22, 0.5), inset 0 0 16px rgba(93, 201, 255, 0.3);
+}
+
+.actuator-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: #c3daff;
+  margin-bottom: 6px;
+}
+
+.actuator-header .lamp {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #6d7f98;
+}
+
+.actuator-header .lamp.on {
+  background: #61ddff;
+  box-shadow: 0 0 10px rgba(97, 221, 255, 0.85);
+}
+
+.actuator-icon {
+  width: 100%;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(126, 187, 245, 0.35);
+  position: relative;
+  background: rgba(17, 29, 48, 0.9);
+}
+
+.actuator-icon.pump .core {
+  position: absolute;
+  left: 16px;
+  top: 6px;
+  width: 40px;
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(120deg, #7e94af, #3e556f);
+}
+
+.actuator-icon.pump .port {
+  position: absolute;
+  right: 14px;
+  top: 10px;
+  width: 12px;
+  height: 8px;
+  border-radius: 4px;
+  background: #7f95b1;
+}
+
+.actuator-icon.valve .body {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: 10px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(120deg, #8db0cb, #3d5f83);
+}
+
+.actuator-icon.valve .stem {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 4px;
+  width: 6px;
+  height: 18px;
+  border-radius: 3px;
+  background: #afcbe3;
 }
 
 @keyframes flow-forward {
