@@ -343,6 +343,35 @@ body::before {
   z-index: 4;
 }
 
+button.actuator {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+}
+
+.actuator.clickable {
+  cursor: pointer;
+}
+
+.actuator.clickable:hover .machine,
+.actuator.clickable:focus-visible .machine {
+  filter: drop-shadow(0 0 10px rgba(108, 231, 255, 0.38));
+}
+
+.actuator.clickable:focus-visible {
+  outline: none;
+}
+
+.actuator.clickable:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
 .actuator .machine {
   width: 94px;
   height: 56px;

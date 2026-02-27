@@ -568,6 +568,11 @@ export default function App() {
             flows={flows}
             alarms={alarms}
             heaterOn={heaterOn}
+            online={isOnline}
+            valveConfigured={autoStatus.configured !== false}
+            busy={busy}
+            onTogglePump={handleRelay}
+            onToggleValve={handleAuto}
           />
         </main>
 
@@ -585,9 +590,6 @@ export default function App() {
           pumps={pumps}
           autoStatus={autoStatus}
           online={isOnline}
-          busy={busy}
-          onToggleRelay={handleRelay}
-          onToggleValve={handleAuto}
         />
 
         <OpsPanels events={events} alarms={alarmList} runtime={runtime} />

@@ -1,5 +1,5 @@
 import { type CSSProperties } from "react";
-import type { TankKey, TankReading } from "../api";
+import type { AutoSwitchKey, TankKey, TankReading } from "../api";
 
 export type ProcessDiagram2DProps = {
   tanks: Partial<Record<TankKey, TankReading>>;
@@ -17,6 +17,11 @@ export type ProcessDiagram2DProps = {
     heat: boolean;
   };
   heaterOn: boolean;
+  online: boolean;
+  valveConfigured: boolean;
+  busy: Record<string, boolean>;
+  onTogglePump: (index: number, next: boolean) => void;
+  onToggleValve: (which: AutoSwitchKey, next: boolean) => void;
 };
 
 const formatValue = (value: number | null | undefined, digits: number) => {
@@ -91,14 +96,19 @@ const ActuatorNode = ({
   label,
   on,
   style,
+  onToggle,
+  disabled,
 }: {
   kind: "pump" | "valve";
   label: string;
   on: boolean;
   style: CSSProperties;
+  onToggle?: () => void;
+  disabled?: boolean;
 }) => {
-  return (
-    <div className={`actuator ${kind} ${on ? "on" : "off"}`} style={style}>
+  const className = `actuator ${kind} ${on ? "on" : "off"} ${onToggle ? "clickable" : ""}`;
+  const machine = (
+    <>
       <div className={`machine ${kind}`}>
         {kind === "pump" ? (
           <>
@@ -136,11 +146,42 @@ const ActuatorNode = ({
         <span className="name">{label}</span>
         <span className={`lamp ${on ? "on" : "off"}`} />
       </div>
+    </>
+  );
+
+  if (onToggle) {
+    return (
+      <button
+        type="button"
+        className={className}
+        style={style}
+        onClick={onToggle}
+        disabled={disabled}
+        title={disabled ? `${label} 不可操作` : `点击切换 ${label}`}
+      >
+        {machine}
+      </button>
+    );
+  }
+
+  return (
+    <div className={className} style={style}>
+      {machine}
     </div>
   );
 };
 
-export default function ProcessDiagram2D({ tanks, flows, alarms, heaterOn }: ProcessDiagram2DProps) {
+export default function ProcessDiagram2D({
+  tanks,
+  flows,
+  alarms,
+  heaterOn,
+  online,
+  valveConfigured,
+  busy,
+  onTogglePump,
+  onToggleValve,
+}: ProcessDiagram2DProps) {
   const valveFreshOn = flows.pump3 && flows.valveFresh;
   const valveHeatOn = flows.pump3 && flows.valveHeat;
   const inletFreshValveOn = flows.pump1;
@@ -238,13 +279,48 @@ export default function ProcessDiagram2D({ tanks, flows, alarms, heaterOn }: Pro
       <div className={`flow-tag c ${valveFreshOn ? "on" : ""}`}>C 浸泡桶 → 清水桶</div>
       <div className={`flow-tag d ${valveHeatOn ? "on" : ""}`}>D 浸泡桶 → 加热桶</div>
 
-      <ActuatorNode kind="pump" label="P1" on={flows.pump1} style={{ left: 367, top: 476 }} />
+      <ActuatorNode
+        kind="pump"
+        label="P1"
+        on={flows.pump1}
+        style={{ left: 367, top: 476 }}
+        onToggle={() => onTogglePump(0, !flows.pump1)}
+        disabled={!online || Boolean(busy["relay-0"])}
+      />
       <ActuatorNode kind="valve" label="V3" on={inletFreshValveOn} style={{ left: 493, top: 670 }} />
-      <ActuatorNode kind="pump" label="P2" on={flows.pump2} style={{ left: 1007, top: 476 }} />
+      <ActuatorNode
+        kind="pump"
+        label="P2"
+        on={flows.pump2}
+        style={{ left: 1007, top: 476 }}
+        onToggle={() => onTogglePump(1, !flows.pump2)}
+        disabled={!online || Boolean(busy["relay-1"])}
+      />
       <ActuatorNode kind="valve" label="V4" on={inletHeatValveOn} style={{ left: 853, top: 670 }} />
-      <ActuatorNode kind="pump" label="P3" on={flows.pump3} style={{ left: 687, top: 1260 }} />
-      <ActuatorNode kind="valve" label="V1" on={valveFreshOn} style={{ left: 153, top: 1278 }} />
-      <ActuatorNode kind="valve" label="V2" on={valveHeatOn} style={{ left: 1193, top: 1278 }} />
+      <ActuatorNode
+        kind="pump"
+        label="P3"
+        on={flows.pump3}
+        style={{ left: 687, top: 1260 }}
+        onToggle={() => onTogglePump(2, !flows.pump3)}
+        disabled={!online || Boolean(busy["relay-2"])}
+      />
+      <ActuatorNode
+        kind="valve"
+        label="V1"
+        on={valveFreshOn}
+        style={{ left: 153, top: 1278 }}
+        onToggle={() => onToggleValve("fresh", !flows.valveFresh)}
+        disabled={!online || !valveConfigured || Boolean(busy["auto-fresh"])}
+      />
+      <ActuatorNode
+        kind="valve"
+        label="V2"
+        on={valveHeatOn}
+        style={{ left: 1193, top: 1278 }}
+        onToggle={() => onToggleValve("heat", !flows.valveHeat)}
+        disabled={!online || !valveConfigured || Boolean(busy["auto-heat"])}
+      />
 
       <div className={`heater-unit ${heaterOn ? "on" : "off"}`}>
         <div className="heater-core" />
