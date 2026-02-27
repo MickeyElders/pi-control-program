@@ -190,7 +190,7 @@ body::before {
   top: 420px;
   left: 0;
   right: 0;
-  height: 1120px;
+  height: 1360px;
 }
 
 .lift-panel {
@@ -1288,7 +1288,7 @@ button.actuator {
   position: absolute;
   left: 40px;
   right: 40px;
-  top: 1555px;
+  top: 1820px;
   height: 340px;
   background: linear-gradient(180deg, rgba(18, 30, 53, 0.9), rgba(11, 22, 40, 0.92));
   border: 1px solid rgba(78, 170, 247, 0.33);
