@@ -15,13 +15,13 @@
   --shadow: 0 20px 50px rgba(6, 12, 26, 0.55);
   --header-side: 40px;
   --section-side: 40px;
-  --top-info-top: 154px;
+  --top-info-top: 120px;
   --top-info-height: 280px;
-  --stage-top: 450px;
-  --stage-height: 1360px;
-  --trend-top: 1820px;
+  --stage-top: 430px;
+  --stage-height: 1400px;
+  --trend-top: 1860px;
   --trend-height: 340px;
-  --ops-top: 2218px;
+  --ops-top: 2258px;
   --ops-height: 280px;
   --foot-bottom: 18px;
 }
@@ -1790,11 +1790,11 @@ button.actuator {
     --header-side: 34px;
     --section-side: 34px;
     --top-info-height: 262px;
-    --stage-top: 432px;
-    --stage-height: 1334px;
-    --trend-top: 1776px;
+    --stage-top: 410px;
+    --stage-height: 1368px;
+    --trend-top: 1814px;
     --trend-height: 334px;
-    --ops-top: 2124px;
+    --ops-top: 2162px;
     --ops-height: 364px;
   }
 
@@ -1815,11 +1815,11 @@ button.actuator {
     --header-side: 28px;
     --section-side: 28px;
     --top-info-height: 246px;
-    --stage-top: 412px;
-    --stage-height: 1272px;
-    --trend-top: 1692px;
+    --stage-top: 392px;
+    --stage-height: 1306px;
+    --trend-top: 1728px;
     --trend-height: 312px;
-    --ops-top: 2016px;
+    --ops-top: 2048px;
     --ops-height: 448px;
   }
 
