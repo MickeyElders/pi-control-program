@@ -17,6 +17,10 @@ export type LiftState = "up" | "down" | "stop";
 export type LiftStatus = {
   configured?: boolean;
   state?: LiftState;
+  estimated_mm?: number | null;
+  estimated_percent?: number | null;
+  max_mm?: number | null;
+  speed_mm_s?: number | null;
 };
 
 export type HeaterStatus = {
@@ -33,11 +37,25 @@ export type TankReading = {
   color?: [number, number, number] | null;
 };
 
+export type SystemStatus = {
+  host?: string;
+  gpio_backend?: string;
+  cpu_percent?: number | null;
+  memory_percent?: number | null;
+  disk_percent?: number | null;
+  cpu_temp?: number | null;
+  uptime_sec?: number | null;
+  load1?: number | null;
+  load5?: number | null;
+  load15?: number | null;
+};
+
 export type StatusResponse = {
   relays?: RelayStatus[];
   auto?: AutoStatus;
   lift?: LiftStatus;
   heater?: HeaterStatus;
+  system?: SystemStatus;
   tank?: Partial<Record<TankKey, TankReading>>;
 };
 

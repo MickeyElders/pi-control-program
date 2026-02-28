@@ -1,4 +1,4 @@
-import type { TankKey, TankReading } from "../api";
+import type { SystemStatus, TankKey, TankReading } from "../api";
 
 export type CommLog = {
   ts: number;
@@ -17,6 +17,7 @@ export type TopInfoPanelsProps = {
   successRate: number;
   errorCount: number;
   tankReadings: Partial<Record<TankKey, TankReading>>;
+  systemStatus?: SystemStatus;
   alarmCount: number;
   commLogs: CommLog[];
 };
@@ -33,6 +34,19 @@ const levelText = (value: number | null | undefined) => {
   return `${Math.round(percent)}%`;
 };
 
+const percentText = (value: number | null | undefined) => {
+  if (!Number.isFinite(value)) return "--";
+  return `${Number(value).toFixed(1)}%`;
+};
+
+const uptimeText = (value: number | null | undefined) => {
+  if (!Number.isFinite(value)) return "--";
+  const seconds = Math.max(0, Math.floor(Number(value)));
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return `${hours}h ${minutes}m`;
+};
+
 export default function TopInfoPanels({
   online,
   pollMs,
@@ -42,6 +56,7 @@ export default function TopInfoPanels({
   successRate,
   errorCount,
   tankReadings,
+  systemStatus,
   alarmCount,
   commLogs,
 }: TopInfoPanelsProps) {
@@ -83,6 +98,40 @@ export default function TopInfoPanels({
           <div className="kpi-item">
             <span>浸泡桶液位</span>
             <strong>{levelText(soak?.level)}</strong>
+          </div>
+        </div>
+        <div className="system-strip">
+          <div className="system-chip">
+            <span>主机</span>
+            <strong>{systemStatus?.host || "--"}</strong>
+          </div>
+          <div className="system-chip">
+            <span>GPIO后端</span>
+            <strong>{systemStatus?.gpio_backend || "--"}</strong>
+          </div>
+          <div className="system-chip">
+            <span>CPU</span>
+            <strong>{percentText(systemStatus?.cpu_percent)}</strong>
+          </div>
+          <div className="system-chip">
+            <span>内存</span>
+            <strong>{percentText(systemStatus?.memory_percent)}</strong>
+          </div>
+          <div className="system-chip">
+            <span>磁盘</span>
+            <strong>{percentText(systemStatus?.disk_percent)}</strong>
+          </div>
+          <div className="system-chip">
+            <span>CPU温度</span>
+            <strong>{formatValue(systemStatus?.cpu_temp, 1)}°C</strong>
+          </div>
+          <div className="system-chip">
+            <span>系统负载</span>
+            <strong>{formatValue(systemStatus?.load1, 2)}</strong>
+          </div>
+          <div className="system-chip">
+            <span>运行时长</span>
+            <strong>{uptimeText(systemStatus?.uptime_sec)}</strong>
           </div>
         </div>
       </article>

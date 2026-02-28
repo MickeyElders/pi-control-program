@@ -9,11 +9,11 @@ import {
   setRelay,
   type AutoSwitchKey,
   type StatusResponse,
+  type SystemStatus,
   type TankKey,
   type TankReading,
 } from "./api";
 import type { CommLog } from "./components/TopInfoPanels";
-import HeaterCard from "./components/HeaterCard";
 import HistoryTrendPanel, { type HistorySample } from "./components/HistoryTrendPanel";
 import LiftPanel from "./components/LiftPanel";
 import OpsPanels, { type AlarmItem, type EventItem, type RuntimeStats } from "./components/OpsPanels";
@@ -89,6 +89,18 @@ const DEFAULT_STATUS: StatusResponse = {
     fresh: DEFAULT_TANK_READINGS.fresh,
     heat: DEFAULT_TANK_READINGS.heat,
   },
+  system: {
+    host: "--",
+    gpio_backend: "--",
+    cpu_percent: null,
+    memory_percent: null,
+    disk_percent: null,
+    cpu_temp: null,
+    uptime_sec: null,
+    load1: null,
+    load5: null,
+    load15: null,
+  },
 };
 
 const getRelayOn = (status: StatusResponse | null, index: number) =>
@@ -112,6 +124,8 @@ const hasTankAlarm = (reading?: TankReading) => {
 const HISTORY_MAX = 4000;
 const LOG_MAX = 18;
 const EVENT_MAX = 80;
+const LIFT_SPEED_MM_S = 10;
+const LIFT_MAX_MM_DEFAULT = 1000;
 
 const numericOrNull = (value: number | null | undefined) => (Number.isFinite(value) ? Number(value) : null);
 
@@ -161,6 +175,8 @@ export default function App() {
   const [lastLatencyMs, setLastLatencyMs] = useState(0);
   const [latestError, setLatestError] = useState("");
   const [events, setEvents] = useState<EventItem[]>([]);
+  const [liftEstimatedMm, setLiftEstimatedMm] = useState(0);
+  const [liftMaxMm, setLiftMaxMm] = useState(LIFT_MAX_MM_DEFAULT);
   const [runtime, setRuntime] = useState<RuntimeStats>({
     pumpRuntimeSec: { 0: 0, 1: 0, 2: 0 },
     pumpStarts: { 0: 0, 1: 0, 2: 0 },
@@ -191,6 +207,15 @@ export default function App() {
       setRequestOk((prev) => prev + 1);
       setLatestError("");
       lastOkTsRef.current = Date.now();
+      const backendLiftMax = data.lift?.max_mm;
+      if (Number.isFinite(backendLiftMax) && Number(backendLiftMax) > 0) {
+        setLiftMaxMm(Number(backendLiftMax));
+      }
+      const backendLiftMm = data.lift?.estimated_mm;
+      if (Number.isFinite(backendLiftMm)) {
+        const targetMax = Number.isFinite(backendLiftMax) && Number(backendLiftMax) > 0 ? Number(backendLiftMax) : liftMaxMm;
+        setLiftEstimatedMm(Math.max(0, Math.min(targetMax, Number(backendLiftMm))));
+      }
       appendCommLog({
         ts: Date.now(),
         endpoint: "/api/status",
@@ -293,7 +318,7 @@ export default function App() {
         message,
       });
     }
-  }, [apiBase, appendCommLog, appendEvent]);
+  }, [apiBase, appendCommLog, appendEvent, liftMaxMm]);
 
   useEffect(() => {
     let active = true;
@@ -321,6 +346,7 @@ export default function App() {
     fresh: effectiveStatus?.tank?.fresh,
     heat: effectiveStatus?.tank?.heat,
   };
+  const systemStatus: SystemStatus | undefined = effectiveStatus?.system;
 
   const flows = {
     pump1: getRelayOn(effectiveStatus, 0),
@@ -415,6 +441,21 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, [flows.pump1, flows.pump2, flows.pump3, isOnline]);
 
+  useEffect(() => {
+    const stepMs = 100;
+    const timer = window.setInterval(() => {
+      setLiftEstimatedMm((prev) => {
+        const delta = (LIFT_SPEED_MM_S * stepMs) / 1000;
+        if (liftState === "up") return Math.min(liftMaxMm, prev + delta);
+        if (liftState === "down") return Math.max(0, prev - delta);
+        return prev;
+      });
+    }, stepMs);
+    return () => window.clearInterval(timer);
+  }, [liftState, liftMaxMm]);
+
+  const liftEstimatedPercent = liftMaxMm > 0 ? Math.round((liftEstimatedMm / liftMaxMm) * 100) : 0;
+
   const handleRelay = useCallback(
     async (index: number, next: boolean) => {
       const key = `relay-${index}`;
@@ -508,13 +549,6 @@ export default function App() {
               <span className="dot" />
               <span>{hasAnyAlarm ? "告警" : "正常"}</span>
             </div>
-            <HeaterCard
-              online={isOnline}
-              configured={heaterConfigured}
-              on={heaterOn}
-              busy={busy["heater"]}
-              onToggle={handleHeater}
-            />
           </div>
         </header>
 
@@ -527,6 +561,7 @@ export default function App() {
           successRate={successRate}
           errorCount={requestFail}
           tankReadings={tankReadings}
+          systemStatus={systemStatus}
           alarmCount={activeAlarmCount}
           commLogs={commLogs}
         />
@@ -544,11 +579,16 @@ export default function App() {
             flows={flows}
             alarms={alarms}
             heaterOn={heaterOn}
+            heaterConfigured={heaterConfigured}
+            liftState={liftState}
+            liftEstimatedMm={liftEstimatedMm}
+            liftEstimatedPercent={liftEstimatedPercent}
             online={isOnline}
             valveConfigured={autoStatus.configured !== false}
             busy={busy}
             onTogglePump={handleRelay}
             onToggleValve={handleAuto}
+            onToggleHeater={handleHeater}
           />
         </main>
 

@@ -1,5 +1,5 @@
 import { type CSSProperties } from "react";
-import type { AutoSwitchKey, TankKey, TankReading } from "../api";
+import type { AutoSwitchKey, LiftState, TankKey, TankReading } from "../api";
 
 export type ProcessDiagram2DProps = {
   tanks: Partial<Record<TankKey, TankReading>>;
@@ -17,11 +17,16 @@ export type ProcessDiagram2DProps = {
     heat: boolean;
   };
   heaterOn: boolean;
+  heaterConfigured: boolean;
+  liftState: LiftState;
+  liftEstimatedMm: number;
+  liftEstimatedPercent: number;
   online: boolean;
   valveConfigured: boolean;
   busy: Record<string, boolean>;
   onTogglePump: (index: number, next: boolean) => void;
   onToggleValve: (which: AutoSwitchKey, next: boolean) => void;
+  onToggleHeater: (next: boolean) => void;
 };
 
 const formatValue = (value: number | null | undefined, digits: number) => {
@@ -176,11 +181,16 @@ export default function ProcessDiagram2D({
   flows,
   alarms,
   heaterOn,
+  heaterConfigured,
+  liftState,
+  liftEstimatedMm,
+  liftEstimatedPercent,
   online,
   valveConfigured,
   busy,
   onTogglePump,
   onToggleValve,
+  onToggleHeater,
 }: ProcessDiagram2DProps) {
   const valveFreshOn = flows.pump3 && flows.valveFresh;
   const valveHeatOn = flows.pump3 && flows.valveHeat;
@@ -189,6 +199,10 @@ export default function ProcessDiagram2D({
   const freshRunning = flows.pump1 || valveFreshOn;
   const heatRunning = flows.pump2 || valveHeatOn;
   const soakRunning = flows.pump1 || flows.pump2 || valveFreshOn || valveHeatOn;
+  const heaterBusy = Boolean(busy["heater"]);
+  const heaterDisabled = !online || !heaterConfigured || heaterBusy;
+  const liftOffsetPx = 50 - (Math.max(0, Math.min(100, liftEstimatedPercent)) / 100) * 100;
+  const liftCableHeight = Math.max(120, 164 + liftOffsetPx);
 
   return (
     <div className="process-board">
@@ -322,11 +336,39 @@ export default function ProcessDiagram2D({
         disabled={!online || !valveConfigured || Boolean(busy["auto-heat"])}
       />
 
-      <div className={`heater-unit ${heaterOn ? "on" : "off"}`}>
+      <button
+        type="button"
+        className={`heater-unit ${heaterOn ? "on" : "off"} ${heaterDisabled ? "disabled" : "clickable"}`}
+        disabled={heaterDisabled}
+        onClick={() => onToggleHeater(!heaterOn)}
+        title={heaterDisabled ? "加热器不可操作" : heaterOn ? "停止加热" : "开始加热"}
+      >
         <div className="heater-core" />
         <div className="heater-grill" />
         <div className="heater-lamp" />
         <div className="heater-label">HEATER</div>
+      </button>
+
+      <div className={`lift-visual ${liftState}`}>
+        <div className="lift-top-unit">
+          <span className="motor" />
+          <span className="drum" />
+        </div>
+        <div className="lift-track left" />
+        <div className="lift-track right" />
+        <div className="lift-cable left" style={{ height: `${liftCableHeight}px` }} />
+        <div className="lift-cable right" style={{ height: `${liftCableHeight}px` }} />
+        <div className="lift-basket" style={{ transform: `translateY(${liftOffsetPx.toFixed(1)}px)` }}>
+          <span className="basket-grid" />
+          <span className="basket-hook left" />
+          <span className="basket-hook right" />
+        </div>
+        <div className={`lift-arrow up ${liftState === "up" ? "on" : ""}`}>↑↑</div>
+        <div className={`lift-arrow down ${liftState === "down" ? "on" : ""}`}>↓↓</div>
+        <div className="lift-readout">
+          <span>升降状态：{liftState === "up" ? "上升" : liftState === "down" ? "下降" : "停止"}</span>
+          <span>位置(估算)：{liftEstimatedPercent}% / {Math.round(liftEstimatedMm)}mm</span>
+        </div>
       </div>
 
       <Tank

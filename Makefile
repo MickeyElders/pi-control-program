@@ -45,6 +45,11 @@ VALVE_PINS ?= $(DEFAULT_VALVE_PINS)
 VALVE_ACTIVE_LOW ?= 0
 LIFT_PINS ?= $(DEFAULT_LIFT_PINS)
 LIFT_ACTIVE_LOW ?= 0
+PERSIST_SAMPLE_SEC ?= 5
+PERSIST_RETENTION_DAYS ?= 30
+DATA_DB_PATH ?= $(WORKDIR)/data/runtime.db
+LIFT_SPEED_MM_S ?= 10
+LIFT_MAX_MM ?= 1000
 PIN_MODE ?= $(DEFAULT_PIN_MODE)
 
 .PHONY: help deps venv install-service install reinstall uninstall start stop restart status logs reset-logic logic-active-high logic-active-low
@@ -60,7 +65,7 @@ help:
 	@echo "make start|stop|restart|status|logs"
 	@echo ""
 	@echo "Overrides:"
-	@echo "  WORKDIR=/path/to/repo SERVICE_USER=pi RELAY_PINS=27,22,23 RELAY_ACTIVE_LOW=0 TANK_LEVELS=72,58,46 TANK_TEMPS=32.5,22.0,45.0 TANK_PHS=6.8,7.2,6.5 HEATER_GPIO=5 HEATER_ACTIVE_LOW=0 VALVE_PINS=23,24 VALVE_ACTIVE_LOW=0 LIFT_PINS=5,6 LIFT_ACTIVE_LOW=0 GPIO_BACKEND=gpiozero PIN_MODE=BOARD PIN_FACTORY=lgpio PORT=8000"
+	@echo "  WORKDIR=/path/to/repo SERVICE_USER=pi RELAY_PINS=27,22,23 RELAY_ACTIVE_LOW=0 TANK_LEVELS=72,58,46 TANK_TEMPS=32.5,22.0,45.0 TANK_PHS=6.8,7.2,6.5 HEATER_GPIO=5 HEATER_ACTIVE_LOW=0 VALVE_PINS=23,24 VALVE_ACTIVE_LOW=0 LIFT_PINS=5,6 LIFT_ACTIVE_LOW=0 GPIO_BACKEND=gpiozero PIN_MODE=BOARD PIN_FACTORY=lgpio PORT=8000 PERSIST_SAMPLE_SEC=5 PERSIST_RETENTION_DAYS=30 DATA_DB_PATH=/home/pi/pi-control-program/data/runtime.db LIFT_SPEED_MM_S=10 LIFT_MAX_MM=1000"
 
 deps:
 	@command -v apt-get >/dev/null 2>&1 || { \
@@ -129,6 +134,11 @@ install-service:
 	    -e "s|^Environment=GPIO_BACKEND=.*|Environment=GPIO_BACKEND=$(GPIO_BACKEND)|" \
 	    -e "s|^Environment=PIN_MODE=.*|Environment=PIN_MODE=$(PIN_MODE)|" \
 	    -e "s|^Environment=GPIOZERO_PIN_FACTORY=.*|Environment=GPIOZERO_PIN_FACTORY=$(PIN_FACTORY)|" \
+	    -e "s|^Environment=PERSIST_SAMPLE_SEC=.*|Environment=PERSIST_SAMPLE_SEC=$(PERSIST_SAMPLE_SEC)|" \
+	    -e "s|^Environment=PERSIST_RETENTION_DAYS=.*|Environment=PERSIST_RETENTION_DAYS=$(PERSIST_RETENTION_DAYS)|" \
+	    -e "s|^Environment=DATA_DB_PATH=.*|Environment=DATA_DB_PATH=$(DATA_DB_PATH)|" \
+	    -e "s|^Environment=LIFT_SPEED_MM_S=.*|Environment=LIFT_SPEED_MM_S=$(LIFT_SPEED_MM_S)|" \
+	    -e "s|^Environment=LIFT_MAX_MM=.*|Environment=LIFT_MAX_MM=$(LIFT_MAX_MM)|" \
 	    $(SERVICE_FILE) > $$tmp; \
 	sudo install -m 644 $$tmp $(SYSTEMD_DIR)/$(SERVICE_NAME); \
 	rm -f $$tmp; \
