@@ -52,11 +52,12 @@ LIFT_SPEED_MM_S ?= 10
 LIFT_MAX_MM ?= 1000
 PIN_MODE ?= $(DEFAULT_PIN_MODE)
 
-.PHONY: help deps venv install-service install reinstall uninstall start stop restart status logs reset-logic logic-active-high logic-active-low
+.PHONY: help deps venv init-db install-service install reinstall uninstall start stop restart status logs reset-logic logic-active-high logic-active-low
 
 help:
 	@echo "make deps           # install system deps (python3-venv)"
 	@echo "make install        # create venv, install pip deps, install+start service"
+	@echo "make init-db        # create sqlite dir/file with correct permissions"
 	@echo "make reinstall      # uninstall + reinstall + reset logic env and restart"
 	@echo "make reset-logic    # rewrite systemd env and restart service with current *_ACTIVE_LOW values"
 	@echo "make logic-active-high # set all devices to active-high (0) and restart"
@@ -73,7 +74,7 @@ deps:
 		exit 1; \
 	}; \
 	missing=""; \
-	for pkg in python3 python3-venv; do \
+	for pkg in python3 python3-venv sqlite3; do \
 		dpkg -s $$pkg >/dev/null 2>&1 || missing="$$missing $$pkg"; \
 	done; \
 	gpio_pkg=""; \
@@ -115,6 +116,15 @@ venv:
 	$(PYTHON) -m venv --system-site-packages $(VENV)
 	$(PIP) install -r requirements.txt
 
+init-db:
+	@db_path="$(DATA_DB_PATH)"; \
+	db_dir=$$(dirname "$$db_path"); \
+	if [ -n "$$db_dir" ] && [ "$$db_dir" != "." ]; then \
+		sudo install -d -m 775 -o $(SERVICE_USER) -g $(SERVICE_USER) "$$db_dir"; \
+	fi; \
+	sudo -u $(SERVICE_USER) sqlite3 "$$db_path" "PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;" >/dev/null; \
+	echo "SQLite ready at $$db_path"
+
 install-service:
 	@tmp=$$(mktemp); \
 	sed -e "s|^User=.*|User=$(SERVICE_USER)|" \
@@ -144,7 +154,7 @@ install-service:
 	rm -f $$tmp; \
 	sudo systemctl daemon-reload
 
-install: deps venv install-service
+install: deps venv init-db install-service
 	sudo systemctl enable --now $(SERVICE_NAME)
 
 reinstall: uninstall install
