@@ -139,7 +139,7 @@ body::before {
 
 .stage-portrait {
   position: absolute;
-  top: 420px;
+  top: 450px;
   left: 0;
   right: 0;
   height: 1360px;
@@ -1325,10 +1325,10 @@ button.actuator {
 
 .top-info-zone {
   position: absolute;
-  left: 40px;
-  right: 40px;
-  top: 168px;
-  height: 230px;
+  left: 28px;
+  right: 28px;
+  top: 154px;
+  height: 280px;
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: 14px;
@@ -1341,6 +1341,9 @@ button.actuator {
   box-shadow: 0 14px 24px rgba(4, 10, 22, 0.42), inset 0 0 14px rgba(58, 128, 198, 0.16);
   padding: 12px 14px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .card-title {
@@ -1405,11 +1408,15 @@ button.actuator {
   color: #def0ff;
   font-size: 0.72rem;
   font-family: "IBM Plex Mono", monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .comm-meta {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
   font-size: 0.72rem;
   color: #a8c1dd;
   margin-bottom: 8px;
@@ -1417,7 +1424,8 @@ button.actuator {
 }
 
 .comm-log-list {
-  height: 166px;
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   display: flex;
   flex-direction: column;
