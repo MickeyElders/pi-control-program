@@ -10,8 +10,12 @@ PIP ?= $(VENV)/bin/pip
 UVICORN ?= $(VENV)/bin/uvicorn
 PORT ?= 8000
 PIN_FACTORY ?= lgpio
-GPIO_BACKEND ?=
+GPIO_BACKEND ?= gpiozero
 PIN_MODE ?=
+
+# Force safe defaults even when empty values are injected from environment.
+PIN_FACTORY := $(if $(strip $(PIN_FACTORY)),$(PIN_FACTORY),lgpio)
+GPIO_BACKEND := $(if $(strip $(GPIO_BACKEND)),$(GPIO_BACKEND),gpiozero)
 
 SERVICE_USER ?= $(USER)
 RELAY_GPIO ?=
