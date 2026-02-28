@@ -9,7 +9,7 @@ WorkingDirectory=/home/pi/pi-control-program
 Environment=RELAY_ACTIVE_LOW=0
 Environment=VALVE_ACTIVE_LOW=0
 Environment=HEATER_ACTIVE_LOW=0
-Environment=LIFT_ACTIVE_LOW=0
+Environment=LIFT_ACTIVE_LOW=1
 Environment=TANK_LEVELS=72,58,46
 Environment=TANK_TEMPS=32.5,22.0,45.0
 Environment=TANK_PHS=6.8,7.2,6.5
