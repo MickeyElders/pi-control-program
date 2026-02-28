@@ -500,7 +500,6 @@ export default function App() {
             <div className="eyebrow">RELAY DECK</div>
             <h1>PID水循环控制</h1>
           </div>
-          <div className="mode-pill">泡泡模式</div>
           <div className="header-right">
             <div className={`status-pill ${isOnline ? "ok" : "error"}`}>
               {isOnline ? "在线" : "离线"}

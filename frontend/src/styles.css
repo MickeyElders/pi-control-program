@@ -70,7 +70,7 @@ body::before {
   left: 40px;
   right: 40px;
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 18px;
 }
@@ -87,16 +87,6 @@ body::before {
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: 6px;
-}
-
-.mode-pill {
-  padding: 8px 20px;
-  border-radius: 999px;
-  background: rgba(230, 240, 255, 0.92);
-  color: #132030;
-  font-size: 0.85rem;
-  font-weight: 600;
-  box-shadow: 0 10px 24px rgba(255, 255, 255, 0.08);
 }
 
 .header-right {
