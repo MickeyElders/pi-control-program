@@ -518,9 +518,13 @@ export default function App() {
     const updateScale = () => {
       const targetWidth = 1440;
       const targetHeight = 2560;
+      const safePadX = 24;
+      const safePadY = 24;
+      const availWidth = Math.max(320, window.innerWidth - safePadX);
+      const availHeight = Math.max(320, window.innerHeight - safePadY);
       const scale = Math.min(
-        window.innerWidth / targetWidth,
-        window.innerHeight / targetHeight
+        availWidth / targetWidth,
+        availHeight / targetHeight
       );
       screenRef.current?.style.setProperty("--scale", scale.toString());
     };

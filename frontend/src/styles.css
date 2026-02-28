@@ -13,6 +13,17 @@
   --text: #eef4ff;
   --muted: #9aa9c2;
   --shadow: 0 20px 50px rgba(6, 12, 26, 0.55);
+  --header-side: 40px;
+  --section-side: 40px;
+  --top-info-top: 154px;
+  --top-info-height: 280px;
+  --stage-top: 450px;
+  --stage-height: 1360px;
+  --trend-top: 1820px;
+  --trend-height: 340px;
+  --ops-top: 2218px;
+  --ops-height: 280px;
+  --foot-bottom: 18px;
 }
 
 * {
@@ -67,8 +78,8 @@ body::before {
 .app-header {
   position: absolute;
   top: 32px;
-  left: 40px;
-  right: 40px;
+  left: var(--header-side);
+  right: var(--header-side);
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
@@ -139,10 +150,10 @@ body::before {
 
 .stage-portrait {
   position: absolute;
-  top: 450px;
+  top: var(--stage-top);
   left: 0;
   right: 0;
-  height: 1360px;
+  height: var(--stage-height);
 }
 
 .lift-panel {
@@ -1360,9 +1371,9 @@ button.actuator {
 
 .foot-bar {
   position: absolute;
-  left: 40px;
-  right: 40px;
-  bottom: 18px;
+  left: var(--section-side);
+  right: var(--section-side);
+  bottom: var(--foot-bottom);
   display: flex;
   gap: 18px;
   font-size: 0.75rem;
@@ -1372,10 +1383,10 @@ button.actuator {
 
 .top-info-zone {
   position: absolute;
-  left: 28px;
-  right: 28px;
-  top: 154px;
-  height: 280px;
+  left: calc(var(--section-side) - 12px);
+  right: calc(var(--section-side) - 12px);
+  top: var(--top-info-top);
+  height: var(--top-info-height);
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: 14px;
@@ -1507,15 +1518,18 @@ button.actuator {
 
 .trend-zone {
   position: absolute;
-  left: 40px;
-  right: 40px;
-  top: 1820px;
-  height: 340px;
+  left: var(--section-side);
+  right: var(--section-side);
+  top: var(--trend-top);
+  height: var(--trend-height);
   background: linear-gradient(180deg, rgba(18, 30, 53, 0.9), rgba(11, 22, 40, 0.92));
   border: 1px solid rgba(78, 170, 247, 0.33);
   border-radius: 12px;
   box-shadow: 0 14px 24px rgba(4, 10, 22, 0.42), inset 0 0 14px rgba(58, 128, 198, 0.16);
   padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .trend-toolbar {
@@ -1568,7 +1582,8 @@ button.actuator {
 }
 
 .trend-chart-wrap {
-  height: 246px;
+  flex: 1;
+  min-height: 190px;
   border: 1px solid rgba(70, 154, 233, 0.2);
   border-radius: 8px;
   background: rgba(9, 18, 33, 0.72);
@@ -1620,10 +1635,10 @@ button.actuator {
 
 .ops-zone {
   position: absolute;
-  left: 40px;
-  right: 40px;
-  top: 2218px;
-  height: 280px;
+  left: var(--section-side);
+  right: var(--section-side);
+  top: var(--ops-top);
+  height: var(--ops-height);
   display: grid;
   grid-template-columns: 1.2fr 1fr 1fr;
   gap: 12px;
@@ -1636,10 +1651,14 @@ button.actuator {
   box-shadow: 0 12px 20px rgba(4, 10, 22, 0.4), inset 0 0 12px rgba(58, 128, 198, 0.14);
   padding: 10px 12px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .scroll-list {
-  height: 230px;
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   display: flex;
   flex-direction: column;
@@ -1689,6 +1708,8 @@ button.actuator {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
+  overflow: auto;
+  min-height: 0;
 }
 
 .runtime-item {
@@ -1751,6 +1772,57 @@ button.actuator {
 @media (max-width: 1200px) {
   .pump-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-height: 2400px) {
+  :root {
+    --header-side: 34px;
+    --section-side: 34px;
+    --top-info-height: 262px;
+    --stage-top: 432px;
+    --stage-height: 1334px;
+    --trend-top: 1776px;
+    --trend-height: 334px;
+    --ops-top: 2124px;
+    --ops-height: 364px;
+  }
+
+  .title-block h1 {
+    font-size: clamp(1.7rem, 2.6vw, 1.9rem);
+  }
+
+  .kpi-item,
+  .comm-log,
+  .event-item,
+  .alarm-item {
+    font-size: 0.66rem;
+  }
+}
+
+@media (max-height: 2100px) {
+  :root {
+    --header-side: 28px;
+    --section-side: 28px;
+    --top-info-height: 246px;
+    --stage-top: 412px;
+    --stage-height: 1272px;
+    --trend-top: 1692px;
+    --trend-height: 312px;
+    --ops-top: 2016px;
+    --ops-height: 448px;
+  }
+
+  .kpi-grid {
+    gap: 6px;
+  }
+
+  .system-strip {
+    gap: 5px;
+  }
+
+  .kpi-item {
+    padding: 6px 7px;
   }
 }
 
