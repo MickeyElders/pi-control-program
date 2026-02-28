@@ -494,10 +494,23 @@ export default function App() {
         await setLift(apiBase, { state });
         await refreshStatus();
       } catch (err) {
+        // Backward compatibility: old backend uses "repeat same direction" to stop.
+        if (state === "stop") {
+          const fallback = liftState === "up" ? "up" : liftState === "down" ? "down" : null;
+          if (fallback) {
+            try {
+              await setLift(apiBase, { state: fallback });
+              await refreshStatus();
+              return;
+            } catch {
+              // Ignore and report unified error below.
+            }
+          }
+        }
         setError("指令发送失败");
       }
     },
-    [apiBase, refreshStatus]
+    [apiBase, liftState, refreshStatus]
   );
 
   const handleHeater = useCallback(

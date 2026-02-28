@@ -170,7 +170,7 @@ class GPIOConfig:
     relay_active_low: bool = env_flag("RELAY_ACTIVE_LOW", "0")
     valve_active_low: bool = env_flag("VALVE_ACTIVE_LOW", os.getenv("RELAY_ACTIVE_LOW", "0"))
     heater_active_low: bool = env_flag("HEATER_ACTIVE_LOW", os.getenv("RELAY_ACTIVE_LOW", "0"))
-    lift_active_low: bool = env_flag("LIFT_ACTIVE_LOW", os.getenv("RELAY_ACTIVE_LOW", "0"))
+    lift_active_low: bool = env_flag("LIFT_ACTIVE_LOW", "1")
 
     lift_speed_mm_s: float = max(0.1, float(os.getenv("LIFT_SPEED_MM_S", "10")))
     lift_max_mm: float = max(1.0, float(os.getenv("LIFT_MAX_MM", "1000")))
