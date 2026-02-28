@@ -1073,6 +1073,53 @@ button.actuator {
   animation: drum-spin-rev 1.1s linear infinite;
 }
 
+.lift-controls {
+  position: absolute;
+  left: 1116px;
+  top: 880px;
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lift-control-btn {
+  width: 120px;
+  border: 1px solid rgba(120, 188, 247, 0.56);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(22, 38, 62, 0.94), rgba(12, 24, 42, 0.94));
+  color: #d8ebff;
+  font-family: "Oxanium", "IBM Plex Mono", sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  padding: 11px 10px;
+  cursor: pointer;
+  box-shadow: 0 10px 16px rgba(6, 12, 24, 0.5), inset 0 0 10px rgba(74, 164, 245, 0.16);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.lift-control-btn:hover,
+.lift-control-btn:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(147, 214, 255, 0.85);
+  box-shadow: 0 12px 18px rgba(6, 12, 24, 0.56), inset 0 0 12px rgba(91, 191, 255, 0.24);
+  outline: none;
+}
+
+.lift-control-btn.active {
+  border-color: rgba(84, 222, 255, 0.9);
+  background: linear-gradient(180deg, rgba(35, 90, 122, 0.92), rgba(16, 52, 78, 0.94));
+  color: #effcff;
+  box-shadow: 0 0 20px rgba(68, 205, 255, 0.28), inset 0 0 12px rgba(124, 232, 255, 0.3);
+}
+
+.lift-control-btn:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 8px 12px rgba(6, 12, 24, 0.4);
+}
+
 .tank.soak {
   --tank-w: 744px;
   --tank-h: 556px;

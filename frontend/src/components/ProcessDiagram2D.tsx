@@ -24,6 +24,7 @@ export type ProcessDiagram2DProps = {
   online: boolean;
   valveConfigured: boolean;
   busy: Record<string, boolean>;
+  onLift: (state: "up" | "down") => void;
   onTogglePump: (index: number, next: boolean) => void;
   onToggleValve: (which: AutoSwitchKey, next: boolean) => void;
   onToggleHeater: (next: boolean) => void;
@@ -188,6 +189,7 @@ export default function ProcessDiagram2D({
   online,
   valveConfigured,
   busy,
+  onLift,
   onTogglePump,
   onToggleValve,
   onToggleHeater,
@@ -201,6 +203,11 @@ export default function ProcessDiagram2D({
   const soakRunning = flows.pump1 || flows.pump2 || valveFreshOn || valveHeatOn;
   const heaterBusy = Boolean(busy["heater"]);
   const heaterDisabled = !online || !heaterConfigured || heaterBusy;
+  const liftBusy = Boolean(busy["lift"]);
+  const liftUpActive = liftState === "up";
+  const liftDownActive = liftState === "down";
+  const liftUpDisabled = !online || liftBusy || liftDownActive;
+  const liftDownDisabled = !online || liftBusy || liftUpActive;
   const liftOffsetPx = 50 - (Math.max(0, Math.min(100, liftEstimatedPercent)) / 100) * 100;
   const liftCableHeight = Math.max(120, 164 + liftOffsetPx);
 
@@ -369,6 +376,25 @@ export default function ProcessDiagram2D({
           <span>升降状态：{liftState === "up" ? "上升" : liftState === "down" ? "下降" : "停止"}</span>
           <span>位置(估算)：{liftEstimatedPercent}% / {Math.round(liftEstimatedMm)}mm</span>
         </div>
+      </div>
+
+      <div className="lift-controls">
+        <button
+          type="button"
+          className={`lift-control-btn ${liftUpActive ? "active" : ""}`}
+          disabled={liftUpDisabled}
+          onClick={() => onLift("up")}
+        >
+          {liftUpActive ? "停止升高" : "升高"}
+        </button>
+        <button
+          type="button"
+          className={`lift-control-btn ${liftDownActive ? "active" : ""}`}
+          disabled={liftDownDisabled}
+          onClick={() => onLift("down")}
+        >
+          {liftDownActive ? "停止下降" : "下降"}
+        </button>
       </div>
 
       <Tank

@@ -15,7 +15,6 @@ import {
 } from "./api";
 import type { CommLog } from "./components/TopInfoPanels";
 import HistoryTrendPanel, { type HistorySample } from "./components/HistoryTrendPanel";
-import LiftPanel from "./components/LiftPanel";
 import OpsPanels, { type AlarmItem, type EventItem, type RuntimeStats } from "./components/OpsPanels";
 import ProcessDiagram2D from "./components/ProcessDiagram2D";
 import TopInfoPanels from "./components/TopInfoPanels";
@@ -567,13 +566,6 @@ export default function App() {
         />
 
         <main className="stage-portrait">
-          <LiftPanel
-            liftState={liftState}
-            online={isOnline}
-            busy={Boolean(busy["lift"])}
-            onLift={handleLift}
-          />
-
           <ProcessDiagram2D
             tanks={tankReadings}
             flows={flows}
@@ -586,6 +578,7 @@ export default function App() {
             online={isOnline}
             valveConfigured={autoStatus.configured !== false}
             busy={busy}
+            onLift={handleLift}
             onTogglePump={handleRelay}
             onToggleValve={handleAuto}
             onToggleHeater={handleHeater}
