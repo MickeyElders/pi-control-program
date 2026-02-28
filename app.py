@@ -4,6 +4,7 @@ import time
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -428,6 +429,23 @@ def set_lift_state(state: str) -> None:
     lift_state = "down"
 
 app = FastAPI(title="Pump Relay Control")
+
+cors_allow_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ALLOW_ORIGINS", "*").split(",")
+    if origin.strip()
+]
+if not cors_allow_origins:
+    cors_allow_origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_allow_origins,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=False,
+)
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
