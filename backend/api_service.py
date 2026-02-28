@@ -2,7 +2,7 @@ import os
 import shutil
 import threading
 import time
-from typing import Optional, Tuple
+from typing import Literal, Optional, Tuple
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -409,7 +409,7 @@ class HeaterCommand(BaseModel):
 
 
 class LiftCommand(BaseModel):
-    state: str
+    state: Literal["up", "down", "stop"]
 
 
 @app.get("/", response_class=HTMLResponse)

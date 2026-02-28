@@ -304,33 +304,23 @@ class GPIOController:
         }
 
     def set_lift(self, state: str) -> str:
-        if state not in {"up", "down"}:
+        if state not in {"up", "down", "stop"}:
             raise ValueError("Invalid lift state.")
         with self.lift_lock:
             self._update_lift_estimate_locked()
             if state == "up":
-                if self.lift_state == "down":
-                    raise ValueError("Lift is moving down.")
-                if self.lift_state == "up":
-                    self.lift_up.off()
-                    self.lift_down.off()
-                    self.lift_state = "stop"
-                    return self.lift_state
                 self.lift_down.off()
                 self.lift_up.on()
                 self.lift_state = "up"
                 return self.lift_state
-
-            if self.lift_state == "up":
-                raise ValueError("Lift is moving up.")
-            if self.lift_state == "down":
+            if state == "down":
                 self.lift_up.off()
-                self.lift_down.off()
-                self.lift_state = "stop"
+                self.lift_down.on()
+                self.lift_state = "down"
                 return self.lift_state
             self.lift_up.off()
-            self.lift_down.on()
-            self.lift_state = "down"
+            self.lift_down.off()
+            self.lift_state = "stop"
             return self.lift_state
 
     def set_heater(self, on: bool) -> bool:

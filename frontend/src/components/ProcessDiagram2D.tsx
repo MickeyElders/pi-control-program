@@ -24,7 +24,7 @@ export type ProcessDiagram2DProps = {
   online: boolean;
   valveConfigured: boolean;
   busy: Record<string, boolean>;
-  onLift: (state: "up" | "down") => void;
+  onLift: (state: "up" | "down" | "stop") => void;
   onTogglePump: (index: number, next: boolean) => void;
   onToggleValve: (which: AutoSwitchKey, next: boolean) => void;
   onToggleHeater: (next: boolean) => void;
@@ -203,11 +203,10 @@ export default function ProcessDiagram2D({
   const soakRunning = flows.pump1 || flows.pump2 || valveFreshOn || valveHeatOn;
   const heaterBusy = Boolean(busy["heater"]);
   const heaterDisabled = !online || !heaterConfigured || heaterBusy;
-  const liftBusy = Boolean(busy["lift"]);
   const liftUpActive = liftState === "up";
   const liftDownActive = liftState === "down";
-  const liftUpDisabled = !online || liftBusy || liftDownActive;
-  const liftDownDisabled = !online || liftBusy || liftUpActive;
+  const liftUpDisabled = !online;
+  const liftDownDisabled = !online;
   const liftOffsetPx = 50 - (Math.max(0, Math.min(100, liftEstimatedPercent)) / 100) * 100;
   const liftCableHeight = Math.max(120, 164 + liftOffsetPx);
 
@@ -383,7 +382,7 @@ export default function ProcessDiagram2D({
           type="button"
           className={`lift-control-btn ${liftUpActive ? "active" : ""}`}
           disabled={liftUpDisabled}
-          onClick={() => onLift("up")}
+          onClick={() => onLift(liftUpActive ? "stop" : "up")}
         >
           {liftUpActive ? "停止升高" : "升高"}
         </button>
@@ -391,7 +390,7 @@ export default function ProcessDiagram2D({
           type="button"
           className={`lift-control-btn ${liftDownActive ? "active" : ""}`}
           disabled={liftDownDisabled}
-          onClick={() => onLift("down")}
+          onClick={() => onLift(liftDownActive ? "stop" : "down")}
         >
           {liftDownActive ? "停止下降" : "下降"}
         </button>

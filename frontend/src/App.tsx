@@ -488,18 +488,15 @@ export default function App() {
   );
 
   const handleLift = useCallback(
-    async (state: "up" | "down") => {
-      setBusyFlag("lift", true);
+    async (state: "up" | "down" | "stop") => {
       try {
         await setLift(apiBase, { state });
         await refreshStatus();
       } catch (err) {
         setError("指令发送失败");
-      } finally {
-        setBusyFlag("lift", false);
       }
     },
-    [apiBase, refreshStatus, setBusyFlag]
+    [apiBase, refreshStatus]
   );
 
   const handleHeater = useCallback(

@@ -74,7 +74,7 @@ export type HeaterCommand = {
 };
 
 export type LiftCommand = {
-  state: "up" | "down";
+  state: LiftState;
 };
 
 const DEFAULT_POLL_MS = 1000;
