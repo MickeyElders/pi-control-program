@@ -490,23 +490,27 @@ export default function App() {
 
   const handleLift = useCallback(
     async (state: "up" | "down" | "stop") => {
+      const sendLift = async (next: "up" | "down" | "stop") => {
+        await setLift(apiBase, { state: next });
+      };
       try {
-        await setLift(apiBase, { state });
-        await refreshStatus();
-      } catch (err) {
-        // Backward compatibility: old backend uses "repeat same direction" to stop.
-        if (state === "stop") {
-          const fallback = liftState === "up" ? "up" : liftState === "down" ? "down" : null;
-          if (fallback) {
-            try {
-              await setLift(apiBase, { state: fallback });
-              await refreshStatus();
-              return;
-            } catch {
-              // Ignore and report unified error below.
+        try {
+          await sendLift(state);
+        } catch {
+          // Backward compatibility: old backend uses "repeat same direction" to stop.
+          if (state === "stop") {
+            const fallback = liftState === "up" ? "up" : liftState === "down" ? "down" : null;
+            if (fallback) {
+              await sendLift(fallback);
+            } else {
+              throw new Error("lift-stop-failed");
             }
+          } else {
+            throw new Error("lift-command-failed");
           }
         }
+        await refreshStatus();
+      } catch {
         setError("指令发送失败");
       }
     },
