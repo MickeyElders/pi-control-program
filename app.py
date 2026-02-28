@@ -184,7 +184,15 @@ def create_output_device(pin: int, active_low: bool, initial_value: bool = False
 DEFAULT_LEVELS = [72, 58, 46]
 DEFAULT_TEMPS = [32.5, 22.0, 45.0]
 DEFAULT_PHS = [6.8, 7.2, 6.5]
-ACTIVE_LOW = os.getenv("RELAY_ACTIVE_LOW", "1").lower() in {"1", "true", "yes", "on"}
+def env_flag(name: str, default: str) -> bool:
+    return os.getenv(name, default).lower() in {"1", "true", "yes", "on"}
+
+
+relay_active_low_raw = os.getenv("RELAY_ACTIVE_LOW", "1")
+RELAY_ACTIVE_LOW = env_flag("RELAY_ACTIVE_LOW", "1")
+VALVE_ACTIVE_LOW = env_flag("VALVE_ACTIVE_LOW", relay_active_low_raw)
+HEATER_ACTIVE_LOW = env_flag("HEATER_ACTIVE_LOW", relay_active_low_raw)
+LIFT_ACTIVE_LOW = env_flag("LIFT_ACTIVE_LOW", relay_active_low_raw)
 
 PIN_PUMP1 = 4
 PIN_PUMP2 = 14
@@ -309,24 +317,24 @@ def parse_modbus_response(resp: bytes, addr: int) -> Optional[tuple[float, float
     return ph_raw / 100.0, temp_raw / 10.0
 
 
-pump1 = create_output_device(PIN_PUMP1, active_low=ACTIVE_LOW, initial_value=False)
-pump2 = create_output_device(PIN_PUMP2, active_low=ACTIVE_LOW, initial_value=False)
-pump3 = create_output_device(PIN_PUMP3, active_low=ACTIVE_LOW, initial_value=False)
+pump1 = create_output_device(PIN_PUMP1, active_low=RELAY_ACTIVE_LOW, initial_value=False)
+pump2 = create_output_device(PIN_PUMP2, active_low=RELAY_ACTIVE_LOW, initial_value=False)
+pump3 = create_output_device(PIN_PUMP3, active_low=RELAY_ACTIVE_LOW, initial_value=False)
 for pump in (pump1, pump2, pump3):
     pump.off()
 
-valve_fresh = create_output_device(PIN_VALVE_FRESH, active_low=ACTIVE_LOW, initial_value=False)
-valve_heat = create_output_device(PIN_VALVE_HEAT, active_low=ACTIVE_LOW, initial_value=False)
+valve_fresh = create_output_device(PIN_VALVE_FRESH, active_low=VALVE_ACTIVE_LOW, initial_value=False)
+valve_heat = create_output_device(PIN_VALVE_HEAT, active_low=VALVE_ACTIVE_LOW, initial_value=False)
 valve_fresh.off()
 valve_heat.off()
 
-lift_up = create_output_device(PIN_LIFT_UP, active_low=ACTIVE_LOW, initial_value=False)
-lift_down = create_output_device(PIN_LIFT_DOWN, active_low=ACTIVE_LOW, initial_value=False)
+lift_up = create_output_device(PIN_LIFT_UP, active_low=LIFT_ACTIVE_LOW, initial_value=False)
+lift_down = create_output_device(PIN_LIFT_DOWN, active_low=LIFT_ACTIVE_LOW, initial_value=False)
 lift_up.off()
 lift_down.off()
 lift_state = "stop"
 
-heater = create_output_device(PIN_HEATER, active_low=ACTIVE_LOW, initial_value=False)
+heater = create_output_device(PIN_HEATER, active_low=HEATER_ACTIVE_LOW, initial_value=False)
 heater.off()
 
 levels_env = os.getenv("TANK_LEVELS", "")

@@ -2,6 +2,7 @@ APP_NAME := pump-control
 SERVICE_NAME := $(APP_NAME).service
 SERVICE_FILE := pump-control.service
 SYSTEMD_DIR := /etc/systemd/system
+SERVICE_OVERRIDE_DIR := $(SYSTEMD_DIR)/$(SERVICE_NAME).d
 
 PYTHON ?= python3
 WORKDIR ?= $(CURDIR)
@@ -46,17 +47,20 @@ LIFT_PINS ?= $(DEFAULT_LIFT_PINS)
 LIFT_ACTIVE_LOW ?= 1
 PIN_MODE ?= $(DEFAULT_PIN_MODE)
 
-.PHONY: help deps venv install-service install reinstall uninstall start stop restart status logs
+.PHONY: help deps venv install-service install reinstall uninstall start stop restart status logs reset-logic logic-active-high logic-active-low
 
 help:
 	@echo "make deps           # install system deps (python3-venv)"
 	@echo "make install        # create venv, install pip deps, install+start service"
-	@echo "make reinstall      # uninstall then install"
+	@echo "make reinstall      # uninstall + reinstall + reset logic env and restart"
+	@echo "make reset-logic    # rewrite systemd env and restart service with current *_ACTIVE_LOW values"
+	@echo "make logic-active-high # set all devices to active-high (0) and restart"
+	@echo "make logic-active-low  # set all devices to active-low (1) and restart"
 	@echo "make uninstall      # stop service and remove venv/service"
 	@echo "make start|stop|restart|status|logs"
 	@echo ""
 	@echo "Overrides:"
-	@echo "  WORKDIR=/path/to/repo SERVICE_USER=pi RELAY_PINS=27,22,23 RELAY_ACTIVE_LOW=1 TANK_LEVELS=72,58,46 TANK_TEMPS=32.5,22.0,45.0 TANK_PHS=6.8,7.2,6.5 HEATER_GPIO=5 HEATER_ACTIVE_LOW=1 VALVE_PINS=23,24 VALVE_ACTIVE_LOW=1 LIFT_PINS=5,6 LIFT_ACTIVE_LOW=1 GPIO_BACKEND=jetson PIN_MODE=BOARD PIN_FACTORY=lgpio PORT=8000"
+	@echo "  WORKDIR=/path/to/repo SERVICE_USER=pi RELAY_PINS=27,22,23 RELAY_ACTIVE_LOW=1 TANK_LEVELS=72,58,46 TANK_TEMPS=32.5,22.0,45.0 TANK_PHS=6.8,7.2,6.5 HEATER_GPIO=5 HEATER_ACTIVE_LOW=1 VALVE_PINS=23,24 VALVE_ACTIVE_LOW=1 LIFT_PINS=5,6 LIFT_ACTIVE_LOW=1 GPIO_BACKEND=gpiozero PIN_MODE=BOARD PIN_FACTORY=lgpio PORT=8000"
 
 deps:
 	@command -v apt-get >/dev/null 2>&1 || { \
@@ -134,10 +138,28 @@ install: deps venv install-service
 	sudo systemctl enable --now $(SERVICE_NAME)
 
 reinstall: uninstall install
+	- sudo rm -rf $(SERVICE_OVERRIDE_DIR)
+	- sudo systemctl daemon-reload
+	$(MAKE) reset-logic \
+		RELAY_ACTIVE_LOW=$(RELAY_ACTIVE_LOW) \
+		VALVE_ACTIVE_LOW=$(VALVE_ACTIVE_LOW) \
+		HEATER_ACTIVE_LOW=$(HEATER_ACTIVE_LOW) \
+		LIFT_ACTIVE_LOW=$(LIFT_ACTIVE_LOW)
+
+reset-logic: install-service
+	sudo systemctl restart $(SERVICE_NAME)
+	@echo "Applied logic: RELAY_ACTIVE_LOW=$(RELAY_ACTIVE_LOW) VALVE_ACTIVE_LOW=$(VALVE_ACTIVE_LOW) HEATER_ACTIVE_LOW=$(HEATER_ACTIVE_LOW) LIFT_ACTIVE_LOW=$(LIFT_ACTIVE_LOW)"
+
+logic-active-high:
+	$(MAKE) reset-logic RELAY_ACTIVE_LOW=0 VALVE_ACTIVE_LOW=0 HEATER_ACTIVE_LOW=0 LIFT_ACTIVE_LOW=0
+
+logic-active-low:
+	$(MAKE) reset-logic RELAY_ACTIVE_LOW=1 VALVE_ACTIVE_LOW=1 HEATER_ACTIVE_LOW=1 LIFT_ACTIVE_LOW=1
 
 uninstall:
 	- sudo systemctl disable --now $(SERVICE_NAME)
 	- sudo rm -f $(SYSTEMD_DIR)/$(SERVICE_NAME)
+	- sudo rm -rf $(SERVICE_OVERRIDE_DIR)
 	- sudo systemctl daemon-reload
 	rm -rf $(VENV)
 
