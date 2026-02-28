@@ -157,6 +157,7 @@ const buildHistorySample = (data: StatusResponse): HistorySample => ({
 
 export default function App() {
   const screenRef = useRef<HTMLDivElement | null>(null);
+  const screenFrameRef = useRef<HTMLDivElement | null>(null);
   const prevStatusRef = useRef<StatusResponse | null>(null);
   const prevOnlineRef = useRef<boolean>(false);
   const lastOkTsRef = useRef<number>(0);
@@ -522,10 +523,14 @@ export default function App() {
       const safePadY = 24;
       const availWidth = Math.max(320, window.innerWidth - safePadX);
       const availHeight = Math.max(320, window.innerHeight - safePadY);
-      const scale = Math.min(
+      const fitScale = Math.min(
         availWidth / targetWidth,
         availHeight / targetHeight
       );
+      const isMobile = window.innerWidth <= 900;
+      const scale = isMobile ? Math.max(fitScale, 0.42) : fitScale;
+      screenFrameRef.current?.style.setProperty("width", `${targetWidth * scale}px`);
+      screenFrameRef.current?.style.setProperty("height", `${targetHeight * scale}px`);
       screenRef.current?.style.setProperty("--scale", scale.toString());
     };
     updateScale();
@@ -535,68 +540,70 @@ export default function App() {
 
   return (
     <div className="screen-root">
-      <div className="screen" ref={screenRef}>
-        <header className="app-header">
-          <div className="title-block">
-            <div className="eyebrow">RELAY DECK</div>
-            <h1>PID水循环控制</h1>
-          </div>
-          <div className="header-right">
-            <div className={`status-pill ${isOnline ? "ok" : "error"}`}>
-              {isOnline ? "在线" : "离线"}
+      <div className="screen-frame" ref={screenFrameRef}>
+        <div className="screen" ref={screenRef}>
+          <header className="app-header">
+            <div className="title-block">
+              <div className="eyebrow">RELAY DECK</div>
+              <h1>PID水循环控制</h1>
             </div>
-            <div className={`alarm-lamp ${hasAnyAlarm ? "on" : "off"}`}>
-              <span className="dot" />
-              <span>{hasAnyAlarm ? "告警" : "正常"}</span>
+            <div className="header-right">
+              <div className={`status-pill ${isOnline ? "ok" : "error"}`}>
+                {isOnline ? "在线" : "离线"}
+              </div>
+              <div className={`alarm-lamp ${hasAnyAlarm ? "on" : "off"}`}>
+                <span className="dot" />
+                <span>{hasAnyAlarm ? "告警" : "正常"}</span>
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
 
-        <TopInfoPanels
-          online={isOnline}
-          pollMs={pollMs}
-          lastUpdated={lastUpdated}
-          lastLatencyMs={lastLatencyMs}
-          heartbeat={heartbeat}
-          successRate={successRate}
-          errorCount={requestFail}
-          tankReadings={tankReadings}
-          systemStatus={systemStatus}
-          alarmCount={activeAlarmCount}
-          commLogs={commLogs}
-        />
-
-        <main className="stage-portrait">
-          <ProcessDiagram2D
-            tanks={tankReadings}
-            flows={flows}
-            alarms={alarms}
-            heaterOn={heaterOn}
-            heaterConfigured={heaterConfigured}
-            liftState={liftState}
-            liftEstimatedMm={liftEstimatedMm}
-            liftEstimatedPercent={liftEstimatedPercent}
+          <TopInfoPanels
             online={isOnline}
-            valveConfigured={autoStatus.configured !== false}
-            busy={busy}
-            onLift={handleLift}
-            onTogglePump={handleRelay}
-            onToggleValve={handleAuto}
-            onToggleHeater={handleHeater}
+            pollMs={pollMs}
+            lastUpdated={lastUpdated}
+            lastLatencyMs={lastLatencyMs}
+            heartbeat={heartbeat}
+            successRate={successRate}
+            errorCount={requestFail}
+            tankReadings={tankReadings}
+            systemStatus={systemStatus}
+            alarmCount={activeAlarmCount}
+            commLogs={commLogs}
           />
-        </main>
 
-        <HistoryTrendPanel samples={history} />
+          <main className="stage-portrait">
+            <ProcessDiagram2D
+              tanks={tankReadings}
+              flows={flows}
+              alarms={alarms}
+              heaterOn={heaterOn}
+              heaterConfigured={heaterConfigured}
+              liftState={liftState}
+              liftEstimatedMm={liftEstimatedMm}
+              liftEstimatedPercent={liftEstimatedPercent}
+              online={isOnline}
+              valveConfigured={autoStatus.configured !== false}
+              busy={busy}
+              onLift={handleLift}
+              onTogglePump={handleRelay}
+              onToggleValve={handleAuto}
+              onToggleHeater={handleHeater}
+            />
+          </main>
 
-        <OpsPanels events={events} alarms={alarmList} runtime={runtime} />
+          <HistoryTrendPanel samples={history} />
 
-        <footer className="foot-bar">
-          <span>Last update: {lastUpdated ? lastUpdated.toLocaleTimeString() : "--"}</span>
-          <span>API: {apiBase || "(相对地址)"}</span>
-          <span>刷新: {pollMs}ms</span>
-          {error ? <span className="foot-error">{error}</span> : null}
-          {latestError ? <span className="foot-error">{latestError}</span> : null}
-        </footer>
+          <OpsPanels events={events} alarms={alarmList} runtime={runtime} />
+
+          <footer className="foot-bar">
+            <span>Last update: {lastUpdated ? lastUpdated.toLocaleTimeString() : "--"}</span>
+            <span>API: {apiBase || "(相对地址)"}</span>
+            <span>刷新: {pollMs}ms</span>
+            {error ? <span className="foot-error">{error}</span> : null}
+            {latestError ? <span className="foot-error">{latestError}</span> : null}
+          </footer>
+        </div>
       </div>
     </div>
   );

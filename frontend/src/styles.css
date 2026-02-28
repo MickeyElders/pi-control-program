@@ -64,14 +64,24 @@ body::before {
   align-items: flex-start;
   justify-content: center;
   padding-top: 12px;
+  overflow: hidden;
+}
+
+.screen-frame {
+  position: relative;
+  flex: 0 0 auto;
+  width: 1440px;
+  height: 2560px;
 }
 
 .screen {
   width: 1440px;
   height: 2560px;
   transform: scale(var(--scale, 1));
-  transform-origin: top center;
-  position: relative;
+  transform-origin: top left;
+  position: absolute;
+  top: 0;
+  left: 0;
   padding: 0;
 }
 
@@ -1829,5 +1839,17 @@ button.actuator {
 @media (max-width: 720px) {
   .pump-row {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  body {
+    overflow: auto;
+  }
+
+  .screen-root {
+    justify-content: flex-start;
+    padding: 8px;
+    overflow: auto;
   }
 }
