@@ -2,6 +2,7 @@ import { type CSSProperties } from "react";
 import type { AutoSwitchKey, LiftState, TankKey, TankReading } from "../api";
 
 export type ProcessDiagram2DProps = {
+  layout?: "portrait" | "landscape";
   tanks: Partial<Record<TankKey, TankReading>>;
   flows: {
     pump1: boolean;
@@ -178,6 +179,7 @@ const ActuatorNode = ({
 };
 
 export default function ProcessDiagram2D({
+  layout = "portrait",
   tanks,
   flows,
   alarms,
@@ -194,6 +196,11 @@ export default function ProcessDiagram2D({
   onToggleValve,
   onToggleHeater,
 }: ProcessDiagram2DProps) {
+  const isLandscape = layout === "landscape";
+  const boardWidth = isLandscape ? 2200 : 1440;
+  const boardHeight = isLandscape ? 1200 : 1600;
+  const mapLandscapeX = (x: number) => Math.round((x / 1440) * boardWidth);
+  const soakPipeOffsetY = isLandscape ? -120 : 0;
   const valveFreshOn = flows.pump3 && flows.valveFresh;
   const valveHeatOn = flows.pump3 && flows.valveHeat;
   const inletFreshValveOn = flows.pump1;
@@ -209,10 +216,94 @@ export default function ProcessDiagram2D({
   const liftDownDisabled = !online;
   const liftOffsetPx = 50 - (Math.max(0, Math.min(100, liftEstimatedPercent)) / 100) * 100;
   const liftCableHeight = Math.max(120, 164 + liftOffsetPx);
+  const pathInHeat = isLandscape
+    ? `M${mapLandscapeX(1120)} 410 L${mapLandscapeX(1120)} 520 L${mapLandscapeX(940)} 520 L${mapLandscapeX(940)} ${600 + soakPipeOffsetY} L${mapLandscapeX(840)} ${600 + soakPipeOffsetY}`
+    : "M1040 432 L1040 560 L900 560 L900 700 L840 700";
+  const pathInFresh = isLandscape
+    ? `M${mapLandscapeX(320)} 410 L${mapLandscapeX(320)} 520 L${mapLandscapeX(500)} 520 L${mapLandscapeX(500)} ${600 + soakPipeOffsetY} L${mapLandscapeX(600)} ${600 + soakPipeOffsetY}`
+    : "M400 432 L400 560 L540 560 L540 700 L600 700";
+  const pathOutletMain = isLandscape
+    ? `M${mapLandscapeX(720)} ${1060 + soakPipeOffsetY} L${mapLandscapeX(720)} ${1140 + soakPipeOffsetY}`
+    : "M720 1216 L720 1340";
+  const pathToHeat = isLandscape
+    ? `M${mapLandscapeX(720)} ${1140 + soakPipeOffsetY} L${mapLandscapeX(1280)} ${1140 + soakPipeOffsetY} L${mapLandscapeX(1280)} 300 L${mapLandscapeX(1180)} 300`
+    : "M720 1340 L1240 1340 L1240 320 L1210 320";
+  const pathToFresh = isLandscape
+    ? `M${mapLandscapeX(720)} ${1140 + soakPipeOffsetY} L${mapLandscapeX(160)} ${1140 + soakPipeOffsetY} L${mapLandscapeX(160)} 300 L${mapLandscapeX(260)} 300`
+    : "M720 1340 L200 1340 L200 320 L230 320";
+  const heaterPath1 = isLandscape
+    ? `M${mapLandscapeX(1300)} 390 L${mapLandscapeX(1218)} 390 L${mapLandscapeX(1218)} 340 L${mapLandscapeX(1130)} 340`
+    : "M1278 410 L1218 410 L1218 348 L1130 348";
+  const heaterPath2 = isLandscape
+    ? `M${mapLandscapeX(1130)} 368 L${mapLandscapeX(1220)} 368 L${mapLandscapeX(1220)} 418 L${mapLandscapeX(1300)} 418`
+    : "M1130 376 L1198 376 L1198 440 L1278 440";
+  const pipeJoints = isLandscape
+    ? [
+        { cx: mapLandscapeX(1120), cy: 520 },
+        { cx: mapLandscapeX(940), cy: 520 },
+        { cx: mapLandscapeX(940), cy: 600 + soakPipeOffsetY },
+        { cx: mapLandscapeX(320), cy: 520 },
+        { cx: mapLandscapeX(500), cy: 520 },
+        { cx: mapLandscapeX(500), cy: 600 + soakPipeOffsetY },
+        { cx: mapLandscapeX(720), cy: 1140 + soakPipeOffsetY },
+        { cx: mapLandscapeX(1280), cy: 1140 + soakPipeOffsetY },
+        { cx: mapLandscapeX(160), cy: 1140 + soakPipeOffsetY },
+      ]
+    : [
+        { cx: 1040, cy: 560 },
+        { cx: 900, cy: 560 },
+        { cx: 900, cy: 700 },
+        { cx: 400, cy: 560 },
+        { cx: 540, cy: 560 },
+        { cx: 540, cy: 700 },
+        { cx: 720, cy: 1340 },
+        { cx: 1240, cy: 1340 },
+        { cx: 200, cy: 1340 },
+      ];
+  const actuatorStyles = isLandscape
+    ? {
+        pump1: { left: mapLandscapeX(296), top: 456 } as CSSProperties,
+        valve3: { left: mapLandscapeX(533), top: 570 + soakPipeOffsetY } as CSSProperties,
+        pump2: { left: mapLandscapeX(1078), top: 456 } as CSSProperties,
+        valve4: { left: mapLandscapeX(813), top: 570 + soakPipeOffsetY } as CSSProperties,
+        pump3: { left: mapLandscapeX(687), top: 1060 + soakPipeOffsetY } as CSSProperties,
+        valve1: { left: mapLandscapeX(73), top: 1078 + soakPipeOffsetY } as CSSProperties,
+        valve2: { left: mapLandscapeX(1273), top: 1078 + soakPipeOffsetY } as CSSProperties,
+      }
+    : {
+        pump1: { left: 367, top: 476 } as CSSProperties,
+        valve3: { left: 493, top: 670 } as CSSProperties,
+        pump2: { left: 1007, top: 476 } as CSSProperties,
+        valve4: { left: 853, top: 670 } as CSSProperties,
+        pump3: { left: 687, top: 1260 } as CSSProperties,
+        valve1: { left: 153, top: 1278 } as CSSProperties,
+        valve2: { left: 1193, top: 1278 } as CSSProperties,
+      };
+  const heaterStyle = (isLandscape
+    ? { left: mapLandscapeX(1260), top: 350 }
+    : { left: 1262, top: 392 }) as CSSProperties;
+  const flowTagStyle = isLandscape
+    ? {
+        a: { left: mapLandscapeX(210), top: 428 } as CSSProperties,
+        b: { right: mapLandscapeX(210), top: 428 } as CSSProperties,
+        c: { left: mapLandscapeX(56), top: 1100 + soakPipeOffsetY } as CSSProperties,
+        d: { right: mapLandscapeX(56), top: 1100 + soakPipeOffsetY } as CSSProperties,
+      }
+    : {
+        a: undefined,
+        b: undefined,
+        c: undefined,
+        d: undefined,
+      };
+  const liftControlStyle = isLandscape ? ({ top: 700 } as CSSProperties) : undefined;
 
   return (
     <div className="process-board">
-      <svg className="pipe-layer" viewBox="0 0 1440 1600" preserveAspectRatio="none">
+      <svg
+        className="pipe-layer"
+        viewBox={`0 0 ${boardWidth} ${boardHeight}`}
+        preserveAspectRatio="none"
+      >
         <defs>
           <linearGradient id="pipeBaseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#1d3a57" />
@@ -227,101 +318,101 @@ export default function ProcessDiagram2D({
           </marker>
         </defs>
 
-        <path className="pipe-base" d="M1040 432 L1040 560 L900 560 L900 700 L840 700" />
-        <path className="pipe-shell" d="M1040 432 L1040 560 L900 560 L900 700 L840 700" />
+        <path className="pipe-base" d={pathInHeat} />
+        <path className="pipe-shell" d={pathInHeat} />
         <path
           className={`pipe-flow ${flows.pump2 ? "on" : ""}`}
           markerEnd={flows.pump2 ? "url(#pipeArrow)" : undefined}
-          d="M1040 432 L1040 560 L900 560 L900 700 L840 700"
+          d={pathInHeat}
         />
 
-        <path className="pipe-base" d="M400 432 L400 560 L540 560 L540 700 L600 700" />
-        <path className="pipe-shell" d="M400 432 L400 560 L540 560 L540 700 L600 700" />
+        <path className="pipe-base" d={pathInFresh} />
+        <path className="pipe-shell" d={pathInFresh} />
         <path
           className={`pipe-flow ${flows.pump1 ? "on" : ""}`}
           markerEnd={flows.pump1 ? "url(#pipeArrow)" : undefined}
-          d="M400 432 L400 560 L540 560 L540 700 L600 700"
+          d={pathInFresh}
         />
 
-        <path className="pipe-base" d="M720 1216 L720 1340" />
-        <path className="pipe-shell" d="M720 1216 L720 1340" />
+        <path className="pipe-base" d={pathOutletMain} />
+        <path className="pipe-shell" d={pathOutletMain} />
         <path
           className={`pipe-flow ${flows.pump3 ? "on" : ""}`}
           markerEnd={flows.pump3 ? "url(#pipeArrow)" : undefined}
-          d="M720 1216 L720 1340"
+          d={pathOutletMain}
         />
 
-        <path className="pipe-base" d="M720 1340 L1240 1340 L1240 320 L1210 320" />
-        <path className="pipe-shell" d="M720 1340 L1240 1340 L1240 320 L1210 320" />
+        <path className="pipe-base" d={pathToHeat} />
+        <path className="pipe-shell" d={pathToHeat} />
         <path
           className={`pipe-flow ${valveHeatOn ? "on" : ""}`}
           markerEnd={valveHeatOn ? "url(#pipeArrow)" : undefined}
-          d="M720 1340 L1240 1340 L1240 320 L1210 320"
+          d={pathToHeat}
         />
 
-        <path className="pipe-base" d="M720 1340 L200 1340 L200 320 L230 320" />
-        <path className="pipe-shell" d="M720 1340 L200 1340 L200 320 L230 320" />
+        <path className="pipe-base" d={pathToFresh} />
+        <path className="pipe-shell" d={pathToFresh} />
         <path
           className={`pipe-flow ${valveFreshOn ? "on" : ""}`}
           markerEnd={valveFreshOn ? "url(#pipeArrow)" : undefined}
-          d="M720 1340 L200 1340 L200 320 L230 320"
+          d={pathToFresh}
         />
 
-        <path className="pipe-base heater-link" d="M1278 410 L1218 410 L1218 348 L1130 348" />
-        <path className="pipe-shell heater-link" d="M1278 410 L1218 410 L1218 348 L1130 348" />
+        <path className="pipe-base heater-link" d={heaterPath1} />
+        <path className="pipe-shell heater-link" d={heaterPath1} />
         <path
           className={`pipe-flow heater-flow ${heaterOn ? "on" : ""}`}
           markerEnd={heaterOn ? "url(#pipeArrow)" : undefined}
-          d="M1278 410 L1218 410 L1218 348 L1130 348"
+          d={heaterPath1}
         />
 
-        <path className="pipe-base heater-link" d="M1130 376 L1198 376 L1198 440 L1278 440" />
-        <path className="pipe-shell heater-link" d="M1130 376 L1198 376 L1198 440 L1278 440" />
+        <path className="pipe-base heater-link" d={heaterPath2} />
+        <path className="pipe-shell heater-link" d={heaterPath2} />
         <path
           className={`pipe-flow heater-flow ${heaterOn ? "on" : ""}`}
           markerEnd={heaterOn ? "url(#pipeArrow)" : undefined}
-          d="M1130 376 L1198 376 L1198 440 L1278 440"
+          d={heaterPath2}
         />
 
-        <circle className="pipe-joint" cx="1040" cy="560" r="8" />
-        <circle className="pipe-joint" cx="900" cy="560" r="8" />
-        <circle className="pipe-joint" cx="900" cy="700" r="8" />
-        <circle className="pipe-joint" cx="400" cy="560" r="8" />
-        <circle className="pipe-joint" cx="540" cy="560" r="8" />
-        <circle className="pipe-joint" cx="540" cy="700" r="8" />
-        <circle className="pipe-joint" cx="720" cy="1340" r="8" />
-        <circle className="pipe-joint" cx="1240" cy="1340" r="8" />
-        <circle className="pipe-joint" cx="200" cy="1340" r="8" />
+        {pipeJoints.map((joint) => (
+          <circle
+            className="pipe-joint"
+            key={`${joint.cx}-${joint.cy}`}
+            cx={joint.cx}
+            cy={joint.cy}
+            r={8}
+          />
+        ))}
       </svg>
 
-      <div className={`flow-tag a ${flows.pump1 ? "on" : ""}`}>A 清水桶 → 浸泡桶</div>
-      <div className={`flow-tag b ${flows.pump2 ? "on" : ""}`}>B 加热桶 → 浸泡桶</div>
-      <div className={`flow-tag c ${valveFreshOn ? "on" : ""}`}>C 浸泡桶 → 清水桶</div>
-      <div className={`flow-tag d ${valveHeatOn ? "on" : ""}`}>D 浸泡桶 → 加热桶</div>
+      <div className={`flow-tag a ${flows.pump1 ? "on" : ""}`} style={flowTagStyle.a}>A 清水桶 → 浸泡桶</div>
+      <div className={`flow-tag b ${flows.pump2 ? "on" : ""}`} style={flowTagStyle.b}>B 加热桶 → 浸泡桶</div>
+      <div className={`flow-tag c ${valveFreshOn ? "on" : ""}`} style={flowTagStyle.c}>C 浸泡桶 → 清水桶</div>
+      <div className={`flow-tag d ${valveHeatOn ? "on" : ""}`} style={flowTagStyle.d}>D 浸泡桶 → 加热桶</div>
 
       <ActuatorNode
         kind="pump"
         label="P1"
         on={flows.pump1}
-        style={{ left: 367, top: 476 }}
+        style={actuatorStyles.pump1}
         onToggle={() => onTogglePump(0, !flows.pump1)}
         disabled={!online || Boolean(busy["relay-0"])}
       />
-      <ActuatorNode kind="valve" label="V3" on={inletFreshValveOn} style={{ left: 493, top: 670 }} />
+      <ActuatorNode kind="valve" label="V3" on={inletFreshValveOn} style={actuatorStyles.valve3} />
       <ActuatorNode
         kind="pump"
         label="P2"
         on={flows.pump2}
-        style={{ left: 1007, top: 476 }}
+        style={actuatorStyles.pump2}
         onToggle={() => onTogglePump(1, !flows.pump2)}
         disabled={!online || Boolean(busy["relay-1"])}
       />
-      <ActuatorNode kind="valve" label="V4" on={inletHeatValveOn} style={{ left: 853, top: 670 }} />
+      <ActuatorNode kind="valve" label="V4" on={inletHeatValveOn} style={actuatorStyles.valve4} />
       <ActuatorNode
         kind="pump"
         label="P3"
         on={flows.pump3}
-        style={{ left: 687, top: 1260 }}
+        style={actuatorStyles.pump3}
         onToggle={() => onTogglePump(2, !flows.pump3)}
         disabled={!online || Boolean(busy["relay-2"])}
       />
@@ -329,7 +420,7 @@ export default function ProcessDiagram2D({
         kind="valve"
         label="V1"
         on={valveFreshOn}
-        style={{ left: 153, top: 1278 }}
+        style={actuatorStyles.valve1}
         onToggle={() => onToggleValve("fresh", !flows.valveFresh)}
         disabled={!online || !valveConfigured || Boolean(busy["auto-fresh"])}
       />
@@ -337,7 +428,7 @@ export default function ProcessDiagram2D({
         kind="valve"
         label="V2"
         on={valveHeatOn}
-        style={{ left: 1193, top: 1278 }}
+        style={actuatorStyles.valve2}
         onToggle={() => onToggleValve("heat", !flows.valveHeat)}
         disabled={!online || !valveConfigured || Boolean(busy["auto-heat"])}
       />
@@ -348,6 +439,7 @@ export default function ProcessDiagram2D({
         disabled={heaterDisabled}
         onClick={() => onToggleHeater(!heaterOn)}
         title={heaterDisabled ? "加热器不可操作" : heaterOn ? "停止加热" : "开始加热"}
+        style={heaterStyle}
       >
         <div className="heater-core" />
         <div className="heater-grill" />
@@ -377,7 +469,7 @@ export default function ProcessDiagram2D({
         </div>
       </div>
 
-      <div className="lift-controls">
+      <div className="lift-controls" style={liftControlStyle}>
         <button
           type="button"
           className={`lift-control-btn ${liftUpActive ? "active" : ""}`}

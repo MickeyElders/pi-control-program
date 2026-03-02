@@ -24,6 +24,7 @@
   --ops-top: 2258px;
   --ops-height: 280px;
   --foot-bottom: 18px;
+  --landscape-process-scale: 0.83;
 }
 
 * {
@@ -1744,6 +1745,137 @@ button.actuator {
   color: #ff9b9b;
 }
 
+.screen.landscape {
+  width: 2560px;
+  height: 1440px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) 360px auto;
+  gap: 12px;
+  padding: 20px 24px 14px;
+}
+
+.screen.landscape .app-header,
+.screen.landscape .top-info-zone,
+.screen.landscape .trend-zone,
+.screen.landscape .ops-zone,
+.screen.landscape .foot-bar {
+  position: static;
+  left: auto;
+  right: auto;
+  top: auto;
+  bottom: auto;
+}
+
+.landscape-main {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 72%) minmax(0, 28%);
+  gap: 12px;
+}
+
+.stage-landscape {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.screen.landscape .stage-landscape .process-board {
+  position: absolute;
+  width: 2200px;
+  height: 1200px;
+  left: 0;
+  top: 0;
+  right: auto;
+  bottom: auto;
+  transform: scale(var(--landscape-process-scale));
+  transform-origin: top left;
+}
+
+.screen.landscape .stage-landscape .tank.fresh {
+  left: 230px;
+  top: 72px;
+}
+
+.screen.landscape .stage-landscape .tank.heat {
+  right: 230px;
+  top: 72px;
+}
+
+.screen.landscape .stage-landscape .tank.soak {
+  left: 728px;
+  top: 380px;
+}
+
+.screen.landscape .stage-landscape .lift-visual {
+  left: 928px;
+  top: 500px;
+}
+
+.screen.landscape .stage-landscape .lift-controls {
+  left: 1705px;
+  top: 670px;
+}
+
+.landscape-side {
+  min-height: 0;
+  display: flex;
+}
+
+.screen.landscape .top-info-zone {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.screen.landscape .card-title {
+  margin-bottom: 6px;
+}
+
+.screen.landscape .kpi-grid {
+  gap: 6px;
+}
+
+.screen.landscape .system-strip {
+  gap: 5px;
+}
+
+.screen.landscape .comm-log-list {
+  min-height: 120px;
+}
+
+.landscape-bottom {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 72%) minmax(0, 28%);
+  gap: 12px;
+}
+
+.screen.landscape .trend-zone,
+.screen.landscape .ops-zone {
+  height: 100%;
+}
+
+.screen.landscape .trend-zone {
+  padding: 8px 12px;
+}
+
+.screen.landscape .ops-zone {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.screen.landscape .ops-card {
+  padding: 8px 10px;
+}
+
+.screen.landscape .foot-bar {
+  margin-top: 2px;
+}
+
 @keyframes device-breath {
   0% {
     box-shadow: inset 0 0 18px rgba(74, 175, 255, 0.18), 0 0 0 rgba(55, 209, 255, 0);
@@ -1842,14 +1974,28 @@ button.actuator {
   }
 }
 
+@media (max-width: 1800px) and (orientation: landscape) {
+  .screen.landscape {
+    grid-template-rows: auto minmax(0, 1fr) 336px auto;
+    padding: 16px 18px 12px;
+    --landscape-process-scale: 0.79;
+  }
+}
+
+@media (min-width: 2200px) and (orientation: landscape) {
+  .screen.landscape {
+    --landscape-process-scale: 0.86;
+  }
+}
+
 @media (max-width: 900px) {
   body {
-    overflow: auto;
+    overflow: hidden;
   }
 
   .screen-root {
-    justify-content: flex-start;
+    justify-content: center;
     padding: 8px;
-    overflow: auto;
+    overflow: hidden;
   }
 }

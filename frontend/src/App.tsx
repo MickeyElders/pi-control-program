@@ -163,6 +163,16 @@ export default function App() {
   const lastOkTsRef = useRef<number>(0);
   const apiBase = useMemo(() => resolveApiBase(), []);
   const pollMs = useMemo(() => resolvePollMs(), []);
+  const forcedMode = useMemo(() => {
+    if (typeof window === "undefined") return "auto";
+    const mode = new URLSearchParams(window.location.search).get("mode");
+    if (mode === "landscape" || mode === "portrait") return mode;
+    return "auto";
+  }, []);
+  const [isLandscape, setIsLandscape] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(orientation: landscape)").matches;
+  });
 
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -533,19 +543,26 @@ export default function App() {
   );
 
   useEffect(() => {
+    if (forcedMode !== "auto") return;
+    const media = window.matchMedia("(orientation: landscape)");
+    const sync = () => setIsLandscape(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, [forcedMode]);
+
+  useEffect(() => {
     const updateScale = () => {
-      const targetWidth = 1440;
-      const targetHeight = 2560;
+      const effectiveLandscape = forcedMode === "landscape" || (forcedMode === "auto" && isLandscape);
+      const targetWidth = effectiveLandscape ? 2560 : 1440;
+      const targetHeight = effectiveLandscape ? 1440 : 2560;
       const safePadX = 24;
       const safePadY = 24;
       const availWidth = Math.max(320, window.innerWidth - safePadX);
       const availHeight = Math.max(320, window.innerHeight - safePadY);
-      const fitScale = Math.min(
-        availWidth / targetWidth,
-        availHeight / targetHeight
-      );
-      const isMobile = window.innerWidth <= 900;
-      const scale = isMobile ? Math.max(fitScale, 0.42) : fitScale;
+      const fitScale = Math.min(availWidth / targetWidth, availHeight / targetHeight);
+      // Always fit the whole board in viewport to avoid mobile drag/pan.
+      const scale = fitScale;
       screenFrameRef.current?.style.setProperty("width", `${targetWidth * scale}px`);
       screenFrameRef.current?.style.setProperty("height", `${targetHeight * scale}px`);
       screenRef.current?.style.setProperty("--scale", scale.toString());
@@ -553,12 +570,86 @@ export default function App() {
     updateScale();
     window.addEventListener("resize", updateScale);
     return () => window.removeEventListener("resize", updateScale);
-  }, []);
+  }, [forcedMode, isLandscape]);
+
+  const effectiveLandscape = forcedMode === "landscape" || (forcedMode === "auto" && isLandscape);
 
   return (
     <div className="screen-root">
       <div className="screen-frame" ref={screenFrameRef}>
-        <div className="screen" ref={screenRef}>
+        <div className={`screen ${effectiveLandscape ? "landscape" : "portrait"}`} ref={screenRef}>
+          {effectiveLandscape ? (
+            <>
+              <header className="app-header">
+                <div className="title-block">
+                  <div className="eyebrow">RELAY DECK</div>
+                  <h1>PID水循环控制</h1>
+                </div>
+                <div className="header-right">
+                  <div className={`status-pill ${isOnline ? "ok" : "error"}`}>
+                    {isOnline ? "在线" : "离线"}
+                  </div>
+                  <div className={`alarm-lamp ${hasAnyAlarm ? "on" : "off"}`}>
+                    <span className="dot" />
+                    <span>{hasAnyAlarm ? "告警" : "正常"}</span>
+                  </div>
+                </div>
+              </header>
+
+              <div className="landscape-main">
+                <main className="stage-landscape">
+                  <ProcessDiagram2D
+                    layout="landscape"
+                    tanks={tankReadings}
+                    flows={flows}
+                    alarms={alarms}
+                    heaterOn={heaterOn}
+                    heaterConfigured={heaterConfigured}
+                    liftState={liftState}
+                    liftEstimatedMm={liftEstimatedMm}
+                    liftEstimatedPercent={liftEstimatedPercent}
+                    online={isOnline}
+                    valveConfigured={autoStatus.configured !== false}
+                    busy={busy}
+                    onLift={handleLift}
+                    onTogglePump={handleRelay}
+                    onToggleValve={handleAuto}
+                    onToggleHeater={handleHeater}
+                  />
+                </main>
+
+                <aside className="landscape-side">
+                  <TopInfoPanels
+                    online={isOnline}
+                    pollMs={pollMs}
+                    lastUpdated={lastUpdated}
+                    lastLatencyMs={lastLatencyMs}
+                    heartbeat={heartbeat}
+                    successRate={successRate}
+                    errorCount={requestFail}
+                    tankReadings={tankReadings}
+                    systemStatus={systemStatus}
+                    alarmCount={activeAlarmCount}
+                    commLogs={commLogs}
+                  />
+                </aside>
+              </div>
+
+              <div className="landscape-bottom">
+                <HistoryTrendPanel samples={history} />
+                <OpsPanels events={events} alarms={alarmList} runtime={runtime} />
+              </div>
+
+              <footer className="foot-bar">
+                <span>Last update: {lastUpdated ? lastUpdated.toLocaleTimeString() : "--"}</span>
+                <span>API: {apiBase || "(相对地址)"}</span>
+                <span>刷新: {pollMs}ms</span>
+                {error ? <span className="foot-error">{error}</span> : null}
+                {latestError ? <span className="foot-error">{latestError}</span> : null}
+              </footer>
+            </>
+          ) : (
+            <>
           <header className="app-header">
             <div className="title-block">
               <div className="eyebrow">RELAY DECK</div>
@@ -591,6 +682,7 @@ export default function App() {
 
           <main className="stage-portrait">
             <ProcessDiagram2D
+              layout="portrait"
               tanks={tankReadings}
               flows={flows}
               alarms={alarms}
@@ -620,6 +712,8 @@ export default function App() {
             {error ? <span className="foot-error">{error}</span> : null}
             {latestError ? <span className="foot-error">{latestError}</span> : null}
           </footer>
+            </>
+          )}
         </div>
       </div>
     </div>
