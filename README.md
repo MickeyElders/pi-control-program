@@ -1,14 +1,46 @@
-# Pump Relay Control
+# Pi Control Program
 
-Minimal local web UI to switch a GPIO-driven opto-coupled relay on/off.
+Local web dashboard for Raspberry Pi / Jetson edge-device control. The app exposes a small browser UI for operating GPIO-driven relay outputs, pumps, valves, lift controls, heater control, simulated tank telemetry, and optional Modbus RTU pH-meter input.
 
-## Quick start (Raspberry Pi)
+This project is a compact example of practical edge automation: a simple operator interface, backend control logic, hardware abstraction, deployment automation, and local development fallback when real GPIO hardware is not available.
+
+## Highlights
+
+- Minimal local web UI for switching relay-controlled devices on and off
+- GPIO backend support for Raspberry Pi and Jetson-style runtimes
+- Pump, valve, heater, and lift-control workflow examples
+- Configurable tank levels, temperatures, and pH values for UI/testing scenarios
+- Optional pH meter polling over Modbus RTU through USB/serial adapters
+- systemd + Makefile automation for install, reinstall, status checks, logs, and service management
+- Mock GPIO mode for development on non-Pi machines
+
+## Architecture
+
+```mermaid
+flowchart LR
+  ui["Browser control UI"] -->|HTTP actions| app["FastAPI control service"]
+  app -->|GPIO backend| relays["relay board / opto-coupled outputs"]
+  app -->|Modbus RTU over USB serial| ph["pH meter"]
+  app -->|status data| ui
+  service["systemd service"] --> app
+```
+
+## Tech Stack
+
+- Python / FastAPI application service
+- GPIO backends for Raspberry Pi, Jetson, or mock local development
+- Modbus RTU serial integration for pH-meter polling
+- systemd deployment automation
+- Makefile-based install and maintenance commands
+
+## Quick Start
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-# Configure if needed
+# Optional configuration
 export RELAY_PINS=27,22,23
 export RELAY_ACTIVE_LOW=1
 export TANK_LEVELS=72,58,46
@@ -19,87 +51,68 @@ export HEATER_GPIO=5
 uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
-Open `http://<raspberrypi-ip>:8000`.
+Open `http://<device-ip>:8000` from a browser on the same network.
 
-## Config
-- GPIO pins are hardcoded in `app.py`:
-  `PIN_PUMP1=4`, `PIN_PUMP2=14`, `PIN_PUMP3=15`,
-  `PIN_VALVE_FRESH=17`, `PIN_VALVE_HEAT=18`, `PIN_HEATER=27`,
-  `PIN_LIFT_UP=22`, `PIN_LIFT_DOWN=24` (BCM numbering).
-- To change pins, edit `app.py` directly.
-- `RELAY_ACTIVE_LOW` (default `1`): set to `1` for low-level trigger, `0` for high-level trigger.
-- `TANK_LEVELS` (default `72,58,46`): soak/fresh/heat water level percentages.
-- `TANK_TEMPS` (default `32.5,22.0,45.0`): soak/fresh/heat temperatures (C).
-- `TANK_PHS` (default `6.8,7.2,6.5`): soak/fresh/heat pH values.
-- `GPIO_BACKEND` (default auto): `jetson`, `rpigpio`, or `gpiozero`.
-- `PIN_MODE` (default `BOARD`): pin numbering for Jetson/RPi.GPIO (`BOARD` or `BCM`).
-- `GPIOZERO_PIN_FACTORY` (default `lgpio`): GPIO backend (`lgpio` or `rpi`).
-- PH meter (Modbus RTU over USB / CH340):
-  - `PH_METER_ENABLED` (default `1`)
-  - `PH_METER_PORT` (default `/dev/ttyUSB0`)
-  - `PH_METER_ADDR` (default `1`)
-  - `PH_METER_BAUD` (default `9600`)
-  - `PH_METER_TIMEOUT` (default `0.8`)
-  - `PH_POLL_INTERVAL` (default `2.0`)
-  - `PH_STALE_SEC` (default `10`)
+## Configuration
 
-## Systemd + Make automation
-Install and start the service (will check and install system deps):
+Common runtime settings:
+
+- `RELAY_PINS` - comma-separated relay GPIO pins
+- `RELAY_ACTIVE_LOW` - set to `1` for low-level relay trigger boards, `0` for high-level trigger boards
+- `TANK_LEVELS` - soak/fresh/heat water level percentages
+- `TANK_TEMPS` - soak/fresh/heat water temperatures
+- `TANK_PHS` - soak/fresh/heat pH values
+- `GPIO_BACKEND` - `auto`, `jetson`, `rpigpio`, or `gpiozero`
+- `PIN_MODE` - `BOARD` or `BCM` where supported
+- `GPIOZERO_PIN_FACTORY` - `lgpio`, `rpi`, or `mock`
+
+pH meter settings:
+
+- `PH_METER_ENABLED` - enable or disable Modbus polling
+- `PH_METER_PORT` - serial port, for example `/dev/ttyUSB0`
+- `PH_METER_ADDR` - Modbus slave address
+- `PH_METER_BAUD` - serial baud rate
+- `PH_METER_TIMEOUT` - serial timeout
+- `PH_POLL_INTERVAL` - polling interval in seconds
+- `PH_STALE_SEC` - stale-data threshold
+
+## Deployment
+
+Install and start the service:
+
 ```bash
-make install SERVICE_USER=pi WORKDIR=/home/pi/pi-control-program RELAY_ACTIVE_LOW=1 TANK_LEVELS=72,58,46 TANK_TEMPS=32.5,22.0,45.0 TANK_PHS=6.8,7.2,6.5 PIN_FACTORY=lgpio
+make install SERVICE_USER=pi WORKDIR=/home/pi/pi-control-program RELAY_ACTIVE_LOW=1 PIN_FACTORY=lgpio
 ```
 
-## Jetson notes
-For Jetson, install the GPIO library and use physical pin numbering:
+Maintenance commands:
+
 ```bash
-sudo apt install -y python3-jetson-gpio
-export GPIO_BACKEND=jetson
-export PIN_MODE=BOARD
-```
-
-Suggested Jetson Nano 40-pin mapping (BOARD pins):
-- Pump1: 7
-- Pump2: 11
-- Pump3: 13
-- Valve1 (soak -> fresh): 15
-- Valve2 (soak -> heat): 16
-- Heater: 18
-- Lift up: 19
-- Lift down: 21
-
-Pins are hardcoded in `app.py`; edit them if you want to use this mapping on Jetson.
-
-Note: Jetson GPIO outputs **3.3V only**. If your relay board needs a 5V control signal, use a level shifter/transistor or a 3.3V-compatible relay input.
-
-## Raspberry Pi (BOARD numbering)
-If you wire by physical pin numbers (e.g. 7/11/13), use RPi.GPIO and BOARD mode:
-```bash
-export GPIO_BACKEND=rpigpio
-export PIN_MODE=BOARD
-```
-Pins are hardcoded in `app.py` (BCM). Edit the constants if you need different pins.
-
-Reinstall / uninstall:
-```bash
+make status
+make logs
 make reinstall
 make uninstall
 ```
 
-Status / logs:
-```bash
-make status
-make logs
-```
+## Hardware Notes
 
-Notes:
-- Newer Raspberry Pi OS (bookworm) uses `lgpio`; older versions may need `PIN_FACTORY=rpi`.
-- `make install` creates a venv with `--system-site-packages` so it can access the system GPIO backend modules.
+- Raspberry Pi deployments can use either BOARD or BCM numbering, depending on the configured backend.
+- Jetson GPIO outputs are typically 3.3V only. If a relay board expects a 5V control signal, use a level shifter, transistor driver, or a 3.3V-compatible relay input.
+- For remote access, use a private VPN such as Tailscale or ZeroTier and keep the UI on the local/VPN network.
 
-## Remote access
-Use a VPN (Tailscale/ZeroTier) and access the same local URL over the VPN.
+## Local Development Without GPIO Hardware
 
-## Local dev without GPIO hardware
-If you need to run this on a non-Pi machine, set:
+For development on a regular workstation, use the mock pin factory:
+
 ```bash
 export GPIOZERO_PIN_FACTORY=mock
+uvicorn app:app --host 127.0.0.1 --port 8000
 ```
+
+## Portfolio Notes
+
+This project demonstrates:
+
+- Building small but complete operational tools for non-desktop hardware environments
+- Translating device-control requirements into a browser-accessible operator workflow
+- Keeping deployment repeatable through systemd and Makefile automation
+- Designing a simple hardware abstraction so the same app can run on real devices or in mock mode
